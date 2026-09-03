@@ -1,0 +1,138 @@
+@import "tailwindcss";
+@import "material-symbols/outlined.css";
+@import "../styles/orderTracker.css";
+
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #333333;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-poppins), sans-serif;
+}
+
+main {
+  scrollbar-gutter: stable;
+}
+
+table pre {
+  border: none !important;
+}
+
+table:hover pre {
+  background: inherit !important;
+  border: none !important;
+}
+
+.page-title {
+  font-size: 1.2rem;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 18px;
+  top: 40px;
+  bottom: 0;
+  width: 2px;
+  background-color: #e5e7eb;
+  z-index: 0;
+}
+
+.timeline-horizontal-line {
+  width: 10px;
+  height: 10px;
+  background: #d9dde4;
+  border-radius: 50%;
+  z-index: 10;
+  position: relative;
+  left: 14px;
+}
+
+/* Custom scrollbar - only visible on hover */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: #cbd5e0 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 3px;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #a0aec0;
+}
+
+/* Custom scrollbar - only visible on hover */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: #cbd5e0 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 3px;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #a0aec0;
+}
+
+.custom-pagination .ant-pagination-item-active {
+  background-color: #fff !important;
+  border: 1px solid #d4b106 !important;
+}
+.custom-pagination .ant-pagination-item-active:hover {
+  background-color: #fff !important;
+  border: 1px solid #d4b106 !important;
+}
+.custom-pagination .ant-pagination-item-active a {
+  color: #d4b106 !important;
+}
+.ant-table-header {
+  overflow-y: scroll !important;
+}

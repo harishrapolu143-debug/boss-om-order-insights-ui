@@ -1,0 +1,24 @@
+[
+  {
+    "key": "order_status_clean",
+    "label": "Order Status (Clean)",
+    "group": "Classification",
+    "groupable": true,
+    "selectable": true,
+    "type": "string",
+    "description": "Normalised order status (Completed, Canceled, Order in Jeopardy, etc.).",
+    "operators": ["is","is_one_of","is_not_one_of","is_not","contains","starts_with","ends_with","does_not_contain","is_anything","is_same","is_different"],
+    "allowed_values": ["Completed","Canceled","No action needed","Orders in jeopardy","null"]
+  },
+  {
+    "key": "category",
+    "label": "Category",
+    "group": "Classification",
+    "groupable": true,
+    "selectable": true,
+    "type": "string",
+    "description": "Normalised order status (Completed, Canceled, Order in Jeopardy, etc.).",
+    "operators": ["is","is_one_of","is_not_one_of","is_not","contains","starts_with","ends_with","does_not_contain","is_anything","is_same","is_different"],
+    "allowed_values": ["Completed","Canceled","No action needed","Orders in jeopardy","null"]
+  }
+]
