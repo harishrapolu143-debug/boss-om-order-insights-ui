@@ -7,8 +7,8 @@ import {
   Activity,
   ExternalLink,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog/dialog";
+import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover/popover";
 import { useAppSelector } from "@/lib/utils/reduxUtils/hooks";
 import moment from "moment";
 import { OrderRecord, VersionHistory } from "@/lib/redux/slices/orderSlice";

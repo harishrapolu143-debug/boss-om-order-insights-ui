@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Eye, Copy, Check } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "./ui/button/button";
 import PayloadViewerModal from "./PayloadViewerModal";
 
 interface CompactPayloadViewerProps {

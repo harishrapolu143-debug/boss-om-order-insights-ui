@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "./ui/dropdown-menu";
+} from "./ui/dropdown-menu/dropdown-menu";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

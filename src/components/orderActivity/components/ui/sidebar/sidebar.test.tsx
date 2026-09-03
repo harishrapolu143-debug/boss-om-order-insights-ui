@@ -31,7 +31,7 @@ import {
 
 const mockUseIsMobile = jest.fn(() => false);
 
-jest.mock("./use-mobile", () => ({
+jest.mock("../use-mobile", () => ({
   useIsMobile: () => mockUseIsMobile(),
 }));
 

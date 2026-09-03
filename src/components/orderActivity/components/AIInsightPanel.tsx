@@ -3,8 +3,8 @@ import {
   Sparkles,
   RefreshCw,
 } from "lucide-react";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
+import { Badge } from "./ui/badge/badge";
+import { Button } from "./ui/button/button";
 import { Groq } from "groq-sdk";
 import ReactMarkdown from "react-markdown";
 

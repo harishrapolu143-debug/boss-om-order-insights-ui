@@ -4,9 +4,9 @@ import { Header } from "./components/Header";
 import { CompactOrderBar } from "./components/CompactOrderBar";
 import { TimelineView } from "./components/TimelineView";
 import { LogTableView } from "./components/LogTableView";
-import { Button } from "./components/ui/button";
+import { Button } from "./components/ui/button/button";
 import { toast } from "sonner";
-import { Toaster } from "./components/ui/sonner";
+import { Toaster } from "./components/ui/sonner/sonner";
 import {
   useLazyGetMilestonesQuery,
   useLazyGetOrderSummaryQuery,

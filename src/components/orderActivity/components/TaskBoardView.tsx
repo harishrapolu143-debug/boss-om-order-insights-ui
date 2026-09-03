@@ -18,8 +18,8 @@ import {
   PauseCircle,
   X,
 } from "lucide-react";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
+import { Badge } from "./ui/badge/badge";
+import { Button } from "./ui/button/button";
 
 interface TimelineEvent {
   id: string;

@@ -5,7 +5,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "./ui/dropdown-menu/dropdown-menu";
 import { BrightspeedLogo } from "./BrightspeedLogo";
 import { UserAvatar } from "./UserAvatar";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";

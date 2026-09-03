@@ -31,12 +31,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { Switch } from "./ui/switch";
-import { Label } from "./ui/label";
+} from "./ui/select/select";
+import { Switch } from "./ui/switch/switch";
+import { Label } from "./ui/label/label";
 import { ViewSwitcher } from "./ViewSwitcher";
-import { MultiSelect } from "./ui/multi-select";
-import { Button } from "../components/ui/button";
+import { MultiSelect } from "./ui/multi-select/multi-select";
+import { Button } from "../components/ui/button/button";
 import { resetOnRefresh } from "@/lib/redux/slices/orderSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 

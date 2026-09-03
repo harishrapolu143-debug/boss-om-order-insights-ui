@@ -12,7 +12,7 @@ import {
   FormMessage,
   FormField,
 } from "./form";
-import { Input } from "./input";
+import { Input } from "../input/input";
 
 type Values = { orderId: string };
 

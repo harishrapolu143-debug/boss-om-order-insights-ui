@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog/dialog";
+import { Button } from "./ui/button/button";
 import { Check, Copy } from "lucide-react";
 
 type Props = {

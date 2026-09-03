@@ -23,7 +23,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../orderActivity/components/ui/tooltip";
+} from "../orderActivity/components/ui/tooltip/tooltip";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { OrderRecord } from "@/lib/redux/slices/orderSlice";
 import {
@@ -31,7 +31,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../orderActivity/components/ui/dialog";
+} from "../orderActivity/components/ui/dialog/dialog";
 import { formatDateTime } from "@/lib/utils/helpers";
 import { normalizeString } from "../orderActivity/utils/normalize";
 import { cn } from "../orderActivity/components/ui/utils";

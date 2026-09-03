@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Badge } from "./ui/badge";
+import { Badge } from "./ui/badge/badge";
 import {
   Calendar,
   User,
@@ -18,7 +18,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
+} from "./ui/tooltip/tooltip";
 import moment from "moment";
 import { DisplayMode } from "../OrderActivity";
 import { useAppSelector } from "@/lib/redux/hooks";

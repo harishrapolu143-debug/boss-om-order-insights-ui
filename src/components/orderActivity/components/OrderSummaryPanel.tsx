@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge } from './ui/badge';
+import { Badge } from './ui/badge/badge';
 import { Calendar, User, Wrench, FileText, AlertCircle } from 'lucide-react';
 
 interface OrderSummaryProps {

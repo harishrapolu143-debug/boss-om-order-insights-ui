@@ -15,7 +15,7 @@ import {
   MoveRight,
   Folder,
 } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { Badge } from "./ui/badge/badge";
 import { CompactPayloadViewer } from "./CompactPayloadViewer";
 import { motion } from "motion/react";
 import { UserAvatar } from "./UserAvatar";

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { Checkbox } from "./checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "../popover/popover";
+import { Checkbox } from "../checkbox/checkbox";
 
 interface MultiSelectOption {
   value: string;

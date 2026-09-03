@@ -6,16 +6,16 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Badge } from "./ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Badge } from "./ui/badge/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { Button } from "./ui/button";
+} from "./ui/select/select";
+import { Button } from "./ui/button/button";
 import moment from "moment";
 import DialogModel from "./DialogModel";
 import { TimelineEvent } from "@/lib/types/order";

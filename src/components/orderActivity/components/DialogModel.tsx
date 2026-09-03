@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog/dialog";
 import { CompactPayloadViewer } from "./CompactPayloadViewer";
-import { Badge } from "./ui/badge";
+import { Badge } from "./ui/badge/badge";
 import { Check, Code } from "lucide-react";
 
 type Primitive = string | number | boolean | null | undefined;

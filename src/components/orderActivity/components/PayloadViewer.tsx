@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Copy, Maximize2, Check, ChevronRight, ChevronDown } from 'lucide-react';
-import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/button/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog/dialog';
 
 interface PayloadViewerProps {
   payload: Record<string, any>;
