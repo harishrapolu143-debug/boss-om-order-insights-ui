@@ -68,12 +68,24 @@ function renderInChart(node: React.ReactNode, config: ChartConfig = CONFIG) {
 }
 
 describe("ChartContainer", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * sets the correct data-slot attribute.
+   */
   it("sets the correct data-slot attribute", () => {
     const { container } = renderContainer();
 
     expect(container.querySelector("[data-slot='chart']")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * applies the default classes.
+   */
   it("applies the default classes", () => {
     const { container } = renderContainer();
 
@@ -84,6 +96,12 @@ describe("ChartContainer", () => {
     expect(chart).toHaveClass("justify-center");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * merges a custom className with the defaults.
+   */
   it("merges a custom className with the defaults", () => {
     const { container } = renderContainer({ className: "h-64" });
 
@@ -93,6 +111,12 @@ describe("ChartContainer", () => {
     expect(chart).toHaveClass("aspect-video");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * generates a data-chart id when none is given.
+   */
   it("generates a data-chart id when none is given", () => {
     const { container } = renderContainer();
 
@@ -103,6 +127,12 @@ describe("ChartContainer", () => {
     expect(id).toMatch(/^chart-/);
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * uses an explicit id when given.
+   */
   it("uses an explicit id when given", () => {
     const { container } = renderContainer({ id: "orders" });
 
@@ -112,6 +142,12 @@ describe("ChartContainer", () => {
     );
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders its children.
+   */
   it("renders its children", () => {
     renderContainer();
 
@@ -120,6 +156,12 @@ describe("ChartContainer", () => {
 });
 
 describe("ChartStyle", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * emits a CSS variable per configured colour.
+   */
   it("emits a CSS variable per configured colour", () => {
     const { container } = renderContainer({ id: "orders" });
 
@@ -130,6 +172,12 @@ describe("ChartStyle", () => {
     expect(css).toContain("[data-chart=chart-orders]");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * emits both light and dark selectors for themed colours.
+   */
   it("emits both light and dark selectors for themed colours", () => {
     const { container } = render(
       <ChartStyle
@@ -147,6 +195,12 @@ describe("ChartStyle", () => {
     expect(css).toContain(".dark [data-chart=chart-themed]");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * renders nothing when no series defines a colour.
+   */
   it("renders nothing when no series defines a colour", () => {
     const { container } = render(
       <ChartStyle id="chart-plain" config={{ active: { label: "Active" } }} />,
@@ -155,6 +209,12 @@ describe("ChartStyle", () => {
     expect(container.querySelector("style")).toBeNull();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * renders nothing for an empty config.
+   */
   it("renders nothing for an empty config", () => {
     const { container } = render(<ChartStyle id="chart-empty" config={{}} />);
 
@@ -163,6 +223,12 @@ describe("ChartStyle", () => {
 });
 
 describe("ChartTooltipContent", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders nothing while inactive.
+   */
   it("renders nothing while inactive", () => {
     const { container } = renderInChart(
       <ChartTooltipContent payload={TOOLTIP_PAYLOAD} />,
@@ -171,6 +237,12 @@ describe("ChartTooltipContent", () => {
     expect(container.querySelector(".shadow-xl")).toBeNull();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * renders nothing when the payload is empty.
+   */
   it("renders nothing when the payload is empty", () => {
     const { container } = renderInChart(
       <ChartTooltipContent active payload={[]} />,
@@ -179,6 +251,12 @@ describe("ChartTooltipContent", () => {
     expect(container.querySelector(".shadow-xl")).toBeNull();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders the series label and value when active.
+   */
   it("renders the series label and value when active", () => {
     renderInChart(
       <ChartTooltipContent active payload={TOOLTIP_PAYLOAD} label="Jan" />,
@@ -188,6 +266,12 @@ describe("ChartTooltipContent", () => {
     expect(screen.getByText("1,200")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * formats the value with locale separators.
+   */
   it("formats the value with locale separators", () => {
     renderInChart(
       <ChartTooltipContent active payload={TOOLTIP_PAYLOAD} label="Jan" />,
@@ -196,6 +280,12 @@ describe("ChartTooltipContent", () => {
     expect(screen.getByText("1,200")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * hides the label when hideLabel is set.
+   */
   it("hides the label when hideLabel is set", () => {
     renderInChart(
       <ChartTooltipContent
@@ -209,6 +299,12 @@ describe("ChartTooltipContent", () => {
     expect(screen.queryByText("Jan")).not.toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders a dot indicator by default.
+   */
   it("renders a dot indicator by default", () => {
     const { container } = renderInChart(
       <ChartTooltipContent active payload={TOOLTIP_PAYLOAD} label="Jan" />,
@@ -217,6 +313,12 @@ describe("ChartTooltipContent", () => {
     expect(container.querySelector(".h-2\\.5.w-2\\.5")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * omits the indicator when hideIndicator is set.
+   */
   it("omits the indicator when hideIndicator is set", () => {
     const { container } = renderInChart(
       <ChartTooltipContent
@@ -230,6 +332,12 @@ describe("ChartTooltipContent", () => {
     expect(container.querySelector(".h-2\\.5.w-2\\.5")).toBeNull();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders a dashed indicator when asked.
+   */
   it("renders a dashed indicator when asked", () => {
     const { container } = renderInChart(
       <ChartTooltipContent
@@ -243,6 +351,12 @@ describe("ChartTooltipContent", () => {
     expect(container.querySelector(".border-dashed")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * uses a custom labelFormatter.
+   */
   it("uses a custom labelFormatter", () => {
     renderInChart(
       <ChartTooltipContent
@@ -256,6 +370,12 @@ describe("ChartTooltipContent", () => {
     expect(screen.getByText("Month: Active")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * uses a custom formatter for each row.
+   */
   it("uses a custom formatter for each row", () => {
     renderInChart(
       <ChartTooltipContent
@@ -269,6 +389,12 @@ describe("ChartTooltipContent", () => {
     expect(screen.getByText("active=1200")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * merges a custom className with the defaults.
+   */
   it("merges a custom className with the defaults", () => {
     const { container } = renderInChart(
       <ChartTooltipContent
@@ -285,6 +411,12 @@ describe("ChartTooltipContent", () => {
     expect(tooltip).toHaveClass("rounded-lg");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * falls back to the payload name when the config has no label.
+   */
   it("falls back to the payload name when the config has no label", () => {
     renderInChart(
       <ChartTooltipContent active payload={TOOLTIP_PAYLOAD} label="Jan" />,
@@ -294,6 +426,12 @@ describe("ChartTooltipContent", () => {
     expect(screen.getByText("active")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * throws when used outside a ChartContainer.
+   */
   it("throws when used outside a ChartContainer", () => {
     const spy = jest.spyOn(console, "error").mockImplementation(() => {});
 
@@ -311,6 +449,12 @@ describe("ChartLegendContent", () => {
     { value: "pending", dataKey: "pending", color: "#f59e0b" },
   ];
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * renders nothing without a payload.
+   */
   it("renders nothing without a payload", () => {
     const { container } = renderInChart(<ChartLegendContent payload={[]} />);
 
@@ -320,6 +464,12 @@ describe("ChartLegendContent", () => {
     expect(container.querySelectorAll(".h-2.w-2")).toHaveLength(0);
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders a labelled entry per series.
+   */
   it("renders a labelled entry per series", () => {
     renderInChart(<ChartLegendContent payload={legendPayload} />);
 
@@ -327,6 +477,12 @@ describe("ChartLegendContent", () => {
     expect(screen.getByText("Pending")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders a colour swatch per series.
+   */
   it("renders a colour swatch per series", () => {
     const { container } = renderInChart(
       <ChartLegendContent payload={legendPayload} />,
@@ -335,6 +491,12 @@ describe("ChartLegendContent", () => {
     expect(container.querySelectorAll(".h-2.w-2")).toHaveLength(2);
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * pads the bottom by default.
+   */
   it("pads the bottom by default", () => {
     const { container } = renderInChart(
       <ChartLegendContent payload={legendPayload} />,
@@ -343,6 +505,12 @@ describe("ChartLegendContent", () => {
     expect(container.querySelector(".pt-3")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * pads the top when aligned to the top.
+   */
   it("pads the top when aligned to the top", () => {
     const { container } = renderInChart(
       <ChartLegendContent payload={legendPayload} verticalAlign="top" />,
@@ -351,6 +519,12 @@ describe("ChartLegendContent", () => {
     expect(container.querySelector(".pb-3")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * merges a custom className with the defaults.
+   */
   it("merges a custom className with the defaults", () => {
     const { container } = renderInChart(
       <ChartLegendContent payload={legendPayload} className="gap-8" />,
@@ -362,6 +536,12 @@ describe("ChartLegendContent", () => {
     expect(legend).toHaveClass("items-center");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * throws when used outside a ChartContainer.
+   */
   it("throws when used outside a ChartContainer", () => {
     const spy = jest.spyOn(console, "error").mockImplementation(() => {});
 
@@ -370,5 +550,134 @@ describe("ChartLegendContent", () => {
     ).toThrow("useChart must be used within a <ChartContainer />");
 
     spy.mockRestore();
+  });
+});
+
+/**
+ * ============================================================================
+ * Chart - additional negative scenarios
+ * ============================================================================
+ */
+describe("Chart negative scenarios", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Two charts on the same page must NOT share a generated id, or their
+   * colour variables would collide.
+   */
+  it("does not reuse the same generated id across charts", () => {
+    const first = renderContainer();
+    const second = renderContainer();
+
+    const firstId = first.container
+      .querySelector("[data-chart]")
+      ?.getAttribute("data-chart");
+
+    const secondId = second.container
+      .querySelector("[data-chart]")
+      ?.getAttribute("data-chart");
+
+    expect(firstId).toBeTruthy();
+    expect(firstId).not.toBe(secondId);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A series that is not in the config must NOT invent a colour variable.
+   */
+  it("does not emit a variable for an unconfigured series", () => {
+    const { container } = renderContainer();
+
+    const style = container.querySelector("style");
+
+    expect(style?.innerHTML).not.toContain(
+      "--color-cancelled",
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The tooltip must NOT be rendered before the user hovers a point.
+   */
+  it("does not render tooltip content while inactive", () => {
+    renderInChart(
+      <ChartTooltipContent
+        active={false}
+        payload={TOOLTIP_PAYLOAD}
+      />,
+    );
+
+    expect(
+      screen.queryByText("Active"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The legend must not render a swatch for a series it was not given.
+   */
+  it("does not render a swatch for a series that is not in the payload", () => {
+    const { container } = renderInChart(
+      <ChartLegendContent
+        payload={[
+          {
+            value: "active",
+            dataKey: "active",
+            color: "#2563eb",
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      container.querySelectorAll(".h-2.w-2"),
+    ).toHaveLength(1);
+
+    expect(
+      screen.queryByText("Pending"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The chart container is a layout wrapper - it must not be interactive
+   * or announced with a role of its own.
+   */
+  it("does not render the container as an interactive element", () => {
+    const { container } = renderContainer();
+
+    const chart = container.querySelector(
+      "[data-slot='chart']",
+    ) as HTMLElement;
+
+    expect(chart).not.toHaveAttribute("role");
+    expect(chart).not.toHaveAttribute("tabindex");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * An explicit id must NOT be replaced by a generated one.
+   */
+  it("does not override an explicit id with a generated one", () => {
+    const { container } = renderContainer({
+      id: "orders-chart",
+    });
+
+    expect(
+      container
+        .querySelector("[data-chart]")
+        ?.getAttribute("data-chart"),
+    ).toBe("chart-orders-chart");
   });
 });

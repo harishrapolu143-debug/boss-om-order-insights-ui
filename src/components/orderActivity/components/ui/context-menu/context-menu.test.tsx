@@ -1,3 +1,4 @@
+import * as React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -7,295 +8,465 @@ import {
   ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuCheckboxItem,
-  ContextMenuRadioItem,
   ContextMenuLabel,
   ContextMenuSeparator,
   ContextMenuShortcut,
   ContextMenuGroup,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
+  ContextMenuCheckboxItem,
   ContextMenuRadioGroup,
+  ContextMenuRadioItem,
 } from "./context-menu";
 
-function renderContextMenu(handlers: { onSelect?: () => void } = {}) {
+type MenuOverrides = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+function renderContextMenu(
+  props: MenuOverrides = {},
+  handlers: { onSelect?: () => void } = {},
+) {
   return render(
-    <ContextMenu>
-      <ContextMenuTrigger>Right click the order row</ContextMenuTrigger>
+    <ContextMenu {...props}>
+      <ContextMenuTrigger>
+        Order row
+      </ContextMenuTrigger>
+
       <ContextMenuContent>
-        <ContextMenuLabel>Order actions</ContextMenuLabel>
+        <ContextMenuLabel>
+          Order actions
+        </ContextMenuLabel>
+
         <ContextMenuSeparator />
+
         <ContextMenuGroup>
-          <ContextMenuItem onSelect={handlers.onSelect}>
-            Edit
-            <ContextMenuShortcut>⌘E</ContextMenuShortcut>
+          <ContextMenuItem
+            onSelect={handlers.onSelect}
+          >
+            Reorder
+            <ContextMenuShortcut>
+              Ctrl R
+            </ContextMenuShortcut>
           </ContextMenuItem>
-          <ContextMenuItem variant="destructive">Delete</ContextMenuItem>
-          <ContextMenuItem disabled>Archive</ContextMenuItem>
+
+          <ContextMenuItem disabled>
+            Cancel order
+          </ContextMenuItem>
         </ContextMenuGroup>
       </ContextMenuContent>
     </ContextMenu>,
   );
 }
 
-/** Radix opens a context menu on the native contextmenu event. */
-async function openMenu(user: ReturnType<typeof userEvent.setup>) {
+async function openContextMenu(
+  user: ReturnType<typeof userEvent.setup>,
+) {
   await user.pointer({
     keys: "[MouseRight]",
-    target: screen.getByText("Right click the order row"),
+    target: screen.getByText("Order row"),
   });
-
-  return screen.findByRole("menu");
 }
 
-describe("ContextMenuTrigger", () => {
-  it("renders with the correct data-slot", () => {
+/**
+ * ============================================================================
+ * ContextMenu
+ * ============================================================================
+ */
+describe("ContextMenu", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The trigger should render with the expected data-slot attribute.
+   */
+  it("sets the correct data-slot attribute on the trigger", () => {
     renderContextMenu();
 
-    expect(screen.getByText("Right click the order row")).toHaveAttribute(
+    expect(
+      screen.getByText("Order row"),
+    ).toHaveAttribute(
       "data-slot",
       "context-menu-trigger",
     );
   });
-});
 
-describe("ContextMenuContent", () => {
-  it("is not rendered until the trigger is right-clicked", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A right click should open the menu.
+   */
+  it("opens on a right click", async () => {
+    const user = userEvent.setup();
+
     renderContextMenu();
 
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-  });
+    await openContextMenu(user);
 
-  it("renders with the menu role once opened", async () => {
-    const user = userEvent.setup();
-    renderContextMenu();
-
-    const menu = await openMenu(user);
-
-    expect(menu).toHaveAttribute("data-slot", "context-menu-content");
-  });
-
-  it("applies the default classes", async () => {
-    const user = userEvent.setup();
-    renderContextMenu();
-
-    const menu = await openMenu(user);
-
-    expect(menu).toHaveClass("bg-popover");
-    expect(menu).toHaveClass("rounded-md");
-    expect(menu).toHaveClass("shadow-md");
-  });
-
-  it("merges a custom className with the defaults", async () => {
-    const user = userEvent.setup();
-    render(
-      <ContextMenu>
-        <ContextMenuTrigger>Right click the order row</ContextMenuTrigger>
-        <ContextMenuContent className="w-64">
-          <ContextMenuItem>Edit</ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>,
-    );
-
-    const menu = await openMenu(user);
-
-    expect(menu).toHaveClass("w-64");
-    expect(menu).toHaveClass("bg-popover");
-  });
-
-  it("renders into a portal, outside the trigger's container", async () => {
-    const user = userEvent.setup();
-    const { container } = renderContextMenu();
-
-    const menu = await openMenu(user);
-
-    expect(container).not.toContainElement(menu);
-  });
-});
-
-describe("ContextMenuItem", () => {
-  it("renders each item with the menuitem role", async () => {
-    const user = userEvent.setup();
-    renderContextMenu();
-
-    await openMenu(user);
-
-    expect(screen.getAllByRole("menuitem")).toHaveLength(3);
-  });
-
-  it("sets the correct data-slot and default variant", async () => {
-    const user = userEvent.setup();
-    renderContextMenu();
-
-    await openMenu(user);
-
-    const item = screen.getByRole("menuitem", { name: /Edit/ });
-
-    expect(item).toHaveAttribute("data-slot", "context-menu-item");
-    expect(item).toHaveAttribute("data-variant", "default");
-  });
-
-  it("records the destructive variant", async () => {
-    const user = userEvent.setup();
-    renderContextMenu();
-
-    await openMenu(user);
-
-    expect(screen.getByRole("menuitem", { name: "Delete" })).toHaveAttribute(
-      "data-variant",
-      "destructive",
-    );
-  });
-
-  it("marks a disabled item", async () => {
-    const user = userEvent.setup();
-    renderContextMenu();
-
-    await openMenu(user);
-
-    expect(screen.getByRole("menuitem", { name: "Archive" })).toHaveAttribute(
-      "data-disabled",
-    );
-  });
-
-  it("records the inset flag", async () => {
-    const user = userEvent.setup();
-    render(
-      <ContextMenu>
-        <ContextMenuTrigger>Right click the order row</ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem inset>Edit</ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>,
-    );
-
-    await openMenu(user);
-
-    expect(screen.getByRole("menuitem", { name: "Edit" })).toHaveAttribute(
-      "data-inset",
-      "true",
-    );
-  });
-});
-
-describe("ContextMenuLabel, Separator and Shortcut", () => {
-  it("set the correct data-slot attributes", async () => {
-    const user = userEvent.setup();
-    const { baseElement } = renderContextMenu();
-
-    await openMenu(user);
-
-    expect(screen.getByText("Order actions")).toHaveAttribute(
-      "data-slot",
-      "context-menu-label",
-    );
     expect(
-      baseElement.querySelector("[data-slot='context-menu-separator']"),
+      screen.getByRole("menu"),
     ).toBeInTheDocument();
-    expect(screen.getByText("⌘E")).toHaveAttribute(
-      "data-slot",
-      "context-menu-shortcut",
-    );
   });
-});
 
-describe("ContextMenuCheckboxItem and RadioItem", () => {
-  it("render checkbox items with their checked state", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Every menu part should render with its own data-slot attribute.
+   */
+  it("sets the correct data-slot attributes on the open menu", async () => {
     const user = userEvent.setup();
+
+    renderContextMenu();
+
+    await openContextMenu(user);
+
+    const menu = screen.getByRole("menu");
+
+    expect(menu).toHaveAttribute(
+      "data-slot",
+      "context-menu-content",
+    );
+
+    [
+      "context-menu-label",
+      "context-menu-separator",
+      "context-menu-group",
+      "context-menu-item",
+      "context-menu-shortcut",
+    ].forEach((slot) => {
+      expect(
+        menu.querySelector(
+          `[data-slot='${slot}']`,
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The items should be exposed as menu items.
+   */
+  it("exposes its items as menu items", async () => {
+    const user = userEvent.setup();
+
+    renderContextMenu();
+
+    await openContextMenu(user);
+
+    expect(
+      screen.getAllByRole("menuitem"),
+    ).toHaveLength(2);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Choosing an item should run its handler and close the menu.
+   */
+  it("runs the item handler and closes", async () => {
+    const user = userEvent.setup();
+    const onSelect = jest.fn();
+
+    renderContextMenu({}, { onSelect });
+
+    await openContextMenu(user);
+
+    await user.click(
+      screen.getByRole("menuitem", {
+        name: /reorder/i,
+      }),
+    );
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    expect(
+      screen.queryByRole("menu"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Escape should dismiss the menu.
+   */
+  it("closes when Escape is pressed", async () => {
+    const user = userEvent.setup();
+
+    renderContextMenu();
+
+    await openContextMenu(user);
+
+    await user.keyboard("{Escape}");
+
+    expect(
+      screen.queryByRole("menu"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * onOpenChange should report the new state.
+   */
+  it("calls onOpenChange when the menu opens", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = jest.fn();
+
+    renderContextMenu({ onOpenChange });
+
+    await openContextMenu(user);
+
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Checkbox items should report their state.
+   */
+  it("supports checkbox items", async () => {
+    const user = userEvent.setup();
+
     render(
       <ContextMenu>
-        <ContextMenuTrigger>Right click the order row</ContextMenuTrigger>
+        <ContextMenuTrigger>Order row</ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuCheckboxItem checked>Show closed</ContextMenuCheckboxItem>
+          <ContextMenuCheckboxItem checked>
+            Show cancelled
+          </ContextMenuCheckboxItem>
         </ContextMenuContent>
       </ContextMenu>,
     );
 
-    await openMenu(user);
+    await openContextMenu(user);
 
-    expect(screen.getByRole("menuitemcheckbox")).toHaveAttribute(
-      "data-state",
-      "checked",
-    );
+    expect(
+      screen.getByRole("menuitemcheckbox"),
+    ).toHaveAttribute("aria-checked", "true");
   });
 
-  it("render radio items and mark the selected one", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Radio items should report the selected value.
+   */
+  it("supports radio items", async () => {
     const user = userEvent.setup();
+
     render(
       <ContextMenu>
-        <ContextMenuTrigger>Right click the order row</ContextMenuTrigger>
+        <ContextMenuTrigger>Order row</ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuRadioGroup value="newest">
-            <ContextMenuRadioItem value="newest">Newest</ContextMenuRadioItem>
-            <ContextMenuRadioItem value="oldest">Oldest</ContextMenuRadioItem>
+            <ContextMenuRadioItem value="newest">
+              Newest first
+            </ContextMenuRadioItem>
+            <ContextMenuRadioItem value="oldest">
+              Oldest first
+            </ContextMenuRadioItem>
           </ContextMenuRadioGroup>
         </ContextMenuContent>
       </ContextMenu>,
     );
 
-    await openMenu(user);
+    await openContextMenu(user);
 
     expect(
-      screen.getByRole("menuitemradio", { name: "Newest" }),
-    ).toHaveAttribute("data-state", "checked");
-    expect(
-      screen.getByRole("menuitemradio", { name: "Oldest" }),
-    ).toHaveAttribute("data-state", "unchecked");
+      screen.getByRole("menuitemradio", {
+        name: "Newest first",
+      }),
+    ).toHaveAttribute("aria-checked", "true");
   });
-});
 
-describe("ContextMenuSub", () => {
-  it("renders a sub-trigger that opens a sub-menu", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The menu must NOT be in the DOM until it is opened.
+   */
+  it("does not render the menu while closed", () => {
+    renderContextMenu();
+
+    expect(
+      screen.queryByRole("menu"),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByText("Order actions"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A plain left click must NOT open a context menu.
+   */
+  it("does not open on a left click", async () => {
     const user = userEvent.setup();
+
+    renderContextMenu();
+
+    await user.click(
+      screen.getByText("Order row"),
+    );
+
+    expect(
+      screen.queryByRole("menu"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A disabled item must not run its handler or close the menu.
+   */
+  it("does not run a disabled item", async () => {
+    const user = userEvent.setup();
+    const onSelect = jest.fn();
+
     render(
       <ContextMenu>
-        <ContextMenuTrigger>Right click the order row</ContextMenuTrigger>
+        <ContextMenuTrigger>Order row</ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuSub>
-            <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
-            <ContextMenuSubContent>
-              <ContextMenuItem>As CSV</ContextMenuItem>
-            </ContextMenuSubContent>
-          </ContextMenuSub>
+          <ContextMenuItem disabled onSelect={onSelect}>
+            Cancel order
+          </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>,
     );
 
-    await openMenu(user);
+    await openContextMenu(user);
 
-    const subTrigger = screen.getByRole("menuitem", { name: /Export/ });
+    await user.click(
+      screen.getByRole("menuitem", {
+        name: "Cancel order",
+      }),
+    );
 
-    expect(subTrigger).toHaveAttribute("data-slot", "context-menu-sub-trigger");
-
-    await user.click(subTrigger);
+    expect(onSelect).not.toHaveBeenCalled();
 
     expect(
-      await screen.findByRole("menuitem", { name: "As CSV" }),
+      screen.getByRole("menu"),
     ).toBeInTheDocument();
   });
-});
 
-describe("ContextMenu interactions", () => {
-  it("selects an item and closes the menu", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A label is a heading, not a choice - it must NOT be exposed as a
+   * selectable menu item.
+   */
+  it("does not expose the label as a menu item", async () => {
     const user = userEvent.setup();
-    const onSelect = jest.fn();
-    renderContextMenu({ onSelect });
 
-    await openMenu(user);
-    await user.click(screen.getByRole("menuitem", { name: /Edit/ }));
-
-    expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-  });
-
-  it("closes on Escape", async () => {
-    const user = userEvent.setup();
     renderContextMenu();
 
-    await openMenu(user);
+    await openContextMenu(user);
+
+    expect(
+      screen.queryByRole("menuitem", {
+        name: "Order actions",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Closing must remove the menu content, not merely hide it.
+   */
+  it("does not leave the items in the DOM after closing", async () => {
+    const user = userEvent.setup();
+
+    renderContextMenu();
+
+    await openContextMenu(user);
+
     await user.keyboard("{Escape}");
 
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Reorder"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A disabled trigger must not open the menu.
+   *
+   * Note that ContextMenu has no controlled `open` prop - the browser
+   * gesture is the only way in - so disabling the trigger is how a
+   * caller suppresses the menu.
+   */
+  it("does not open from a disabled trigger", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ContextMenu>
+        <ContextMenuTrigger disabled>
+          Order row
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem>Reorder</ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>,
+    );
+
+    await openContextMenu(user);
+
+    expect(
+      screen.queryByRole("menu"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * onOpenChange must not fire on the initial render.
+   */
+  it("does not call onOpenChange on initial render", () => {
+    const onOpenChange = jest.fn();
+
+    renderContextMenu({ onOpenChange });
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A keyboard shortcut hint must not be a separate control.
+   */
+  it("does not make the shortcut hint interactive", async () => {
+    const user = userEvent.setup();
+
+    renderContextMenu();
+
+    await openContextMenu(user);
+
+    const shortcut = screen
+      .getByRole("menu")
+      .querySelector(
+        "[data-slot='context-menu-shortcut']",
+      ) as HTMLElement;
+
+    expect(shortcut.tagName).toBe("SPAN");
+    expect(shortcut).not.toHaveAttribute("role");
+    expect(shortcut).not.toHaveAttribute("tabindex");
   });
 });

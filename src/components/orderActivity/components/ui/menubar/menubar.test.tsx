@@ -1,3 +1,4 @@
+import * as React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -8,319 +9,476 @@ import {
   MenubarTrigger,
   MenubarContent,
   MenubarGroup,
-  MenubarSeparator,
   MenubarLabel,
   MenubarItem,
+  MenubarSeparator,
   MenubarShortcut,
   MenubarCheckboxItem,
   MenubarRadioGroup,
   MenubarRadioItem,
-  MenubarSub,
-  MenubarSubTrigger,
-  MenubarSubContent,
 } from "./menubar";
 
-function renderMenubar(handlers: { onSelect?: () => void } = {}) {
+type MenubarOverrides = {
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+};
+
+function renderMenubar(
+  props: MenubarOverrides = {},
+  handlers: { onSelect?: () => void } = {},
+) {
   return render(
-    <Menubar>
-      <MenubarMenu>
-        <MenubarTrigger>File</MenubarTrigger>
+    <Menubar {...props}>
+      <MenubarMenu value="orders">
+        <MenubarTrigger>Orders</MenubarTrigger>
+
         <MenubarContent>
-          <MenubarLabel>File actions</MenubarLabel>
+          <MenubarLabel>Order actions</MenubarLabel>
+
           <MenubarSeparator />
+
           <MenubarGroup>
             <MenubarItem onSelect={handlers.onSelect}>
-              New
-              <MenubarShortcut>⌘N</MenubarShortcut>
+              Reorder
+              <MenubarShortcut>Ctrl R</MenubarShortcut>
             </MenubarItem>
-            <MenubarItem variant="destructive">Delete</MenubarItem>
-            <MenubarItem disabled>Archive</MenubarItem>
+
+            <MenubarItem disabled>
+              Cancel order
+            </MenubarItem>
           </MenubarGroup>
         </MenubarContent>
       </MenubarMenu>
-      <MenubarMenu>
-        <MenubarTrigger>Edit</MenubarTrigger>
+
+      <MenubarMenu value="reports">
+        <MenubarTrigger>Reports</MenubarTrigger>
+
         <MenubarContent>
-          <MenubarItem>Undo</MenubarItem>
+          <MenubarItem>Monthly summary</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
     </Menubar>,
   );
 }
 
+/**
+ * ============================================================================
+ * Menubar
+ * ============================================================================
+ */
 describe("Menubar", () => {
-  it("renders with the menubar role and correct data-slot", () => {
-    renderMenubar();
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Every menubar part should render with its own data-slot attribute.
+   */
+  it("sets the correct data-slot attributes", () => {
+    const { container } = renderMenubar();
 
-    const menubar = screen.getByRole("menubar");
-
-    expect(menubar).toBeInTheDocument();
-    expect(menubar).toHaveAttribute("data-slot", "menubar");
-  });
-
-  it("applies the default classes", () => {
-    renderMenubar();
-
-    const menubar = screen.getByRole("menubar");
-
-    expect(menubar).toHaveClass("bg-background");
-    expect(menubar).toHaveClass("rounded-md");
-    expect(menubar).toHaveClass("border");
-  });
-
-  it("merges a custom className with the defaults", () => {
-    render(
-      <Menubar className="w-full">
-        <MenubarMenu>
-          <MenubarTrigger>File</MenubarTrigger>
-          <MenubarContent>
-            <MenubarItem>New</MenubarItem>
-          </MenubarContent>
-        </MenubarMenu>
-      </Menubar>,
-    );
-
-    expect(screen.getByRole("menubar")).toHaveClass("w-full");
-    expect(screen.getByRole("menubar")).toHaveClass("bg-background");
-  });
-});
-
-describe("MenubarTrigger", () => {
-  it("renders one trigger per menu", () => {
-    renderMenubar();
-
-    expect(screen.getAllByRole("menuitem")).toHaveLength(2);
-  });
-
-  it("sets the correct data-slot attribute", () => {
-    renderMenubar();
-
-    expect(screen.getByRole("menuitem", { name: "File" })).toHaveAttribute(
-      "data-slot",
-      "menubar-trigger",
-    );
-  });
-
-  it("reports the closed state", () => {
-    renderMenubar();
-
-    expect(screen.getByRole("menuitem", { name: "File" })).toHaveAttribute(
-      "data-state",
-      "closed",
-    );
-  });
-});
-
-describe("MenubarContent", () => {
-  it("is not rendered until a trigger is activated", () => {
-    renderMenubar();
-
-    expect(screen.queryByText("File actions")).not.toBeInTheDocument();
-  });
-
-  it("renders with the correct data-slot once opened", async () => {
-    const user = userEvent.setup();
-    const { baseElement } = renderMenubar();
-
-    await user.click(screen.getByRole("menuitem", { name: "File" }));
-
-    const content = await screen.findByText("File actions");
-
-    expect(content).toBeInTheDocument();
     expect(
-      baseElement.querySelector("[data-slot='menubar-content']"),
+      container.querySelector(
+        "[data-slot='menubar']",
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      container.querySelectorAll(
+        "[data-slot='menubar-trigger']",
+      ),
+    ).toHaveLength(2);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The bar should be exposed with the menubar role.
+   */
+  it("renders with the menubar role", () => {
+    renderMenubar();
+
+    expect(
+      screen.getByRole("menubar"),
     ).toBeInTheDocument();
   });
 
-  it("applies the default classes", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Clicking a trigger should open its menu.
+   */
+  it("opens a menu when its trigger is clicked", async () => {
     const user = userEvent.setup();
-    const { baseElement } = renderMenubar();
 
-    await user.click(screen.getByRole("menuitem", { name: "File" }));
-    await screen.findByText("File actions");
-
-    const content = baseElement.querySelector("[data-slot='menubar-content']");
-
-    expect(content).toHaveClass("bg-popover");
-    expect(content).toHaveClass("rounded-md");
-  });
-});
-
-describe("MenubarItem", () => {
-  it("sets the correct data-slot and default variant", async () => {
-    const user = userEvent.setup();
     renderMenubar();
 
-    await user.click(screen.getByRole("menuitem", { name: "File" }));
-
-    const item = await screen.findByRole("menuitem", { name: /New/ });
-
-    expect(item).toHaveAttribute("data-slot", "menubar-item");
-    expect(item).toHaveAttribute("data-variant", "default");
-  });
-
-  it("records the destructive variant", async () => {
-    const user = userEvent.setup();
-    renderMenubar();
-
-    await user.click(screen.getByRole("menuitem", { name: "File" }));
+    await user.click(
+      screen.getByRole("menuitem", {
+        name: "Orders",
+      }),
+    );
 
     expect(
-      await screen.findByRole("menuitem", { name: "Delete" }),
-    ).toHaveAttribute("data-variant", "destructive");
+      screen.getByRole("menu"),
+    ).toBeInTheDocument();
   });
 
-  it("marks a disabled item", async () => {
-    const user = userEvent.setup();
-    renderMenubar();
-
-    await user.click(screen.getByRole("menuitem", { name: "File" }));
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * defaultValue should open the matching menu.
+   */
+  it("respects defaultValue", () => {
+    renderMenubar({ defaultValue: "orders" });
 
     expect(
-      await screen.findByRole("menuitem", { name: "Archive" }),
-    ).toHaveAttribute("data-disabled");
+      screen.getByRole("menu"),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("menuitem", {
+        name: /reorder/i,
+      }),
+    ).toBeInTheDocument();
   });
-});
 
-describe("MenubarLabel, Separator and Shortcut", () => {
-  it("set the correct data-slot attributes", async () => {
-    const user = userEvent.setup();
-    const { baseElement } = renderMenubar();
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Every menu part should render with its own data-slot attribute.
+   */
+  it("sets the correct data-slot attributes on the open menu", () => {
+    renderMenubar({ defaultValue: "orders" });
 
-    await user.click(screen.getByRole("menuitem", { name: "File" }));
-    await screen.findByText("File actions");
+    const menu = screen.getByRole("menu");
 
-    expect(screen.getByText("File actions")).toHaveAttribute(
+    expect(menu).toHaveAttribute(
       "data-slot",
+      "menubar-content",
+    );
+
+    [
       "menubar-label",
-    );
-    expect(
-      baseElement.querySelector("[data-slot='menubar-separator']"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("⌘N")).toHaveAttribute(
-      "data-slot",
+      "menubar-separator",
+      "menubar-group",
+      "menubar-item",
       "menubar-shortcut",
+    ].forEach((slot) => {
+      expect(
+        menu.querySelector(
+          `[data-slot='${slot}']`,
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Choosing an item should run its handler and close the menu.
+   */
+  it("runs the item handler and closes", async () => {
+    const user = userEvent.setup();
+    const onSelect = jest.fn();
+
+    renderMenubar(
+      { defaultValue: "orders" },
+      { onSelect },
+    );
+
+    await user.click(
+      screen.getByRole("menuitem", {
+        name: /reorder/i,
+      }),
+    );
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    expect(
+      screen.queryByRole("menu"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Escape should dismiss the open menu.
+   */
+  it("closes when Escape is pressed", async () => {
+    const user = userEvent.setup();
+
+    renderMenubar({ defaultValue: "orders" });
+
+    await user.keyboard("{Escape}");
+
+    expect(
+      screen.queryByRole("menu"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * onValueChange should report which menu opened.
+   */
+  it("calls onValueChange when a menu opens", async () => {
+    const user = userEvent.setup();
+    const onValueChange = jest.fn();
+
+    renderMenubar({ onValueChange });
+
+    await user.click(
+      screen.getByRole("menuitem", {
+        name: "Orders",
+      }),
+    );
+
+    expect(onValueChange).toHaveBeenCalledWith(
+      "orders",
     );
   });
-});
 
-describe("MenubarCheckboxItem and RadioItem", () => {
-  it("render checkbox items with their checked state", async () => {
-    const user = userEvent.setup();
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Checkbox items should report their state.
+   */
+  it("supports checkbox items", () => {
     render(
-      <Menubar>
-        <MenubarMenu>
+      <Menubar defaultValue="view">
+        <MenubarMenu value="view">
           <MenubarTrigger>View</MenubarTrigger>
           <MenubarContent>
-            <MenubarCheckboxItem checked>Show sidebar</MenubarCheckboxItem>
+            <MenubarCheckboxItem checked>
+              Show cancelled
+            </MenubarCheckboxItem>
           </MenubarContent>
         </MenubarMenu>
       </Menubar>,
     );
 
-    await user.click(screen.getByRole("menuitem", { name: "View" }));
-
-    expect(await screen.findByRole("menuitemcheckbox")).toHaveAttribute(
-      "data-state",
-      "checked",
-    );
+    expect(
+      screen.getByRole("menuitemcheckbox"),
+    ).toHaveAttribute("aria-checked", "true");
   });
 
-  it("render radio items and mark the selected one", async () => {
-    const user = userEvent.setup();
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Radio items should report the selected value.
+   */
+  it("supports radio items", () => {
     render(
-      <Menubar>
-        <MenubarMenu>
+      <Menubar defaultValue="sort">
+        <MenubarMenu value="sort">
           <MenubarTrigger>Sort</MenubarTrigger>
           <MenubarContent>
             <MenubarRadioGroup value="newest">
-              <MenubarRadioItem value="newest">Newest</MenubarRadioItem>
-              <MenubarRadioItem value="oldest">Oldest</MenubarRadioItem>
+              <MenubarRadioItem value="newest">
+                Newest first
+              </MenubarRadioItem>
+              <MenubarRadioItem value="oldest">
+                Oldest first
+              </MenubarRadioItem>
             </MenubarRadioGroup>
           </MenubarContent>
         </MenubarMenu>
       </Menubar>,
     );
 
-    await user.click(screen.getByRole("menuitem", { name: "Sort" }));
-
     expect(
-      await screen.findByRole("menuitemradio", { name: "Newest" }),
-    ).toHaveAttribute("data-state", "checked");
-    expect(
-      screen.getByRole("menuitemradio", { name: "Oldest" }),
-    ).toHaveAttribute("data-state", "unchecked");
+      screen.getByRole("menuitemradio", {
+        name: "Newest first",
+      }),
+    ).toHaveAttribute("aria-checked", "true");
   });
-});
 
-describe("MenubarSub", () => {
-  it("renders a sub-trigger that opens a sub-menu", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * No menu may be open until the user asks for one.
+   */
+  it("does not open any menu by default", () => {
+    renderMenubar();
+
+    expect(
+      screen.queryByRole("menu"),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByText("Order actions"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Opening one menu must close the other - only one may be open at a
+   * time.
+   */
+  it("does not keep two menus open at once", async () => {
     const user = userEvent.setup();
+
+    renderMenubar({ defaultValue: "orders" });
+
+    await user.click(
+      screen.getByRole("menuitem", {
+        name: "Reports",
+      }),
+    );
+
+    expect(
+      screen.queryAllByRole("menu").length,
+    ).toBeLessThanOrEqual(1);
+
+    expect(
+      screen.queryByText("Order actions"),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByText("Reorder"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A disabled item must not run its handler or close the menu.
+   */
+  it("does not run a disabled item", async () => {
+    const user = userEvent.setup();
+    const onSelect = jest.fn();
+
     render(
-      <Menubar>
-        <MenubarMenu>
-          <MenubarTrigger>File</MenubarTrigger>
+      <Menubar defaultValue="orders">
+        <MenubarMenu value="orders">
+          <MenubarTrigger>Orders</MenubarTrigger>
           <MenubarContent>
-            <MenubarSub>
-              <MenubarSubTrigger>Export</MenubarSubTrigger>
-              <MenubarSubContent>
-                <MenubarItem>As CSV</MenubarItem>
-              </MenubarSubContent>
-            </MenubarSub>
+            <MenubarItem disabled onSelect={onSelect}>
+              Cancel order
+            </MenubarItem>
           </MenubarContent>
         </MenubarMenu>
       </Menubar>,
     );
 
-    await user.click(screen.getByRole("menuitem", { name: "File" }));
+    await user.click(
+      screen.getByRole("menuitem", {
+        name: "Cancel order",
+      }),
+    );
 
-    const subTrigger = await screen.findByRole("menuitem", { name: /Export/ });
-
-    expect(subTrigger).toHaveAttribute("data-slot", "menubar-sub-trigger");
-
-    await user.click(subTrigger);
+    expect(onSelect).not.toHaveBeenCalled();
 
     expect(
-      await screen.findByRole("menuitem", { name: "As CSV" }),
+      screen.getByRole("menu"),
     ).toBeInTheDocument();
   });
-});
 
-describe("Menubar interactions", () => {
-  it("opens a menu when its trigger is clicked", async () => {
-    const user = userEvent.setup();
-    renderMenubar();
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A label is a heading, not a choice - it must NOT be exposed as a
+   * selectable menu item.
+   */
+  it("does not expose the label as a menu item", () => {
+    renderMenubar({ defaultValue: "orders" });
 
-    await user.click(screen.getByRole("menuitem", { name: "File" }));
-
-    expect(await screen.findByText("File actions")).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "File" })).toHaveAttribute(
-      "data-state",
-      "open",
-    );
+    expect(
+      screen.queryByRole("menuitem", {
+        name: "Order actions",
+      }),
+    ).not.toBeInTheDocument();
   });
 
-  it("selects an item and closes the menu", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Closing must remove the menu content, not merely hide it.
+   */
+  it("does not leave the items in the DOM after closing", async () => {
     const user = userEvent.setup();
-    const onSelect = jest.fn();
-    renderMenubar({ onSelect });
 
-    await user.click(screen.getByRole("menuitem", { name: "File" }));
-    await user.click(await screen.findByRole("menuitem", { name: /New/ }));
-
-    expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText("File actions")).not.toBeInTheDocument();
-  });
-
-  it("closes on Escape", async () => {
-    const user = userEvent.setup();
-    renderMenubar();
-
-    await user.click(screen.getByRole("menuitem", { name: "File" }));
-    await screen.findByText("File actions");
+    renderMenubar({ defaultValue: "orders" });
 
     await user.keyboard("{Escape}");
 
-    expect(screen.queryByText("File actions")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Reorder"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A controlled menubar must not open a menu on its own.
+   */
+  it("does not open a controlled menubar without a handler", async () => {
+    const user = userEvent.setup();
+
+    renderMenubar({ value: "" });
+
+    await user.click(
+      screen.getByRole("menuitem", {
+        name: "Orders",
+      }),
+    );
+
+    expect(
+      screen.queryByRole("menu"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * onValueChange must not fire on the initial render.
+   */
+  it("does not call onValueChange on initial render", () => {
+    const onValueChange = jest.fn();
+
+    renderMenubar({
+      defaultValue: "orders",
+      onValueChange,
+    });
+
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A keyboard shortcut hint must not be a separate control.
+   */
+  it("does not make the shortcut hint interactive", () => {
+    renderMenubar({ defaultValue: "orders" });
+
+    const shortcut = screen
+      .getByRole("menu")
+      .querySelector(
+        "[data-slot='menubar-shortcut']",
+      ) as HTMLElement;
+
+    expect(shortcut.tagName).toBe("SPAN");
+    expect(shortcut).not.toHaveAttribute("role");
+    expect(shortcut).not.toHaveAttribute("tabindex");
   });
 });

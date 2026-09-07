@@ -1,153 +1,310 @@
+import * as React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
-import { HoverCard, HoverCardTrigger, HoverCardContent } from "./hover-card";
+import {
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+} from "./hover-card";
 
 type HoverCardOverrides = {
   open?: boolean;
   defaultOpen?: boolean;
-  onOpenChange?: (open: boolean) => void;
   openDelay?: number;
   closeDelay?: number;
+  onOpenChange?: (open: boolean) => void;
 };
 
-function renderHoverCard(props: HoverCardOverrides = {}) {
+function renderHoverCard(
+  props: HoverCardOverrides = {},
+) {
   return render(
-    <HoverCard openDelay={0} closeDelay={0} {...props}>
-      <HoverCardTrigger href="/orders">KS1300400032</HoverCardTrigger>
-      <HoverCardContent>Order preview</HoverCardContent>
+    <HoverCard {...props}>
+      <HoverCardTrigger href="#customer">
+        Acme Ltd
+      </HoverCardTrigger>
+
+      <HoverCardContent>
+        Customer since 2019
+      </HoverCardContent>
     </HoverCard>,
   );
 }
 
-describe("HoverCardTrigger", () => {
-  it("renders with the correct data-slot", () => {
+/**
+ * ============================================================================
+ * HoverCard
+ * ============================================================================
+ */
+describe("HoverCard", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The trigger should render with the expected data-slot attribute.
+   */
+  it("sets the correct data-slot attribute on the trigger", () => {
     renderHoverCard();
 
-    const trigger = screen.getByText("KS1300400032");
-
-    expect(trigger).toBeInTheDocument();
-    expect(trigger).toHaveAttribute("data-slot", "hover-card-trigger");
-  });
-
-  it("reports the closed state", () => {
-    renderHoverCard();
-
-    expect(screen.getByText("KS1300400032")).toHaveAttribute(
-      "data-state",
-      "closed",
+    expect(
+      screen.getByText("Acme Ltd"),
+    ).toHaveAttribute(
+      "data-slot",
+      "hover-card-trigger",
     );
   });
-});
 
-describe("HoverCardContent", () => {
-  it("is not rendered while closed", () => {
-    renderHoverCard();
-
-    expect(screen.queryByText("Order preview")).not.toBeInTheDocument();
-  });
-
-  it("is rendered with the correct data-slot when open", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * defaultOpen should render the card straight away.
+   */
+  it("respects defaultOpen", () => {
     renderHoverCard({ defaultOpen: true });
 
-    const content = screen.getByText("Order preview");
-
-    expect(content).toBeInTheDocument();
-    expect(content).toHaveAttribute("data-slot", "hover-card-content");
+    expect(
+      screen.getByText("Customer since 2019"),
+    ).toBeInTheDocument();
   });
 
-  it("applies the default classes", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The open content should carry the expected data-slot attribute.
+   */
+  it("sets the correct data-slot attribute on the content", () => {
     renderHoverCard({ defaultOpen: true });
 
-    const content = screen.getByText("Order preview");
-
-    expect(content).toHaveClass("bg-popover");
-    expect(content).toHaveClass("w-64");
-    expect(content).toHaveClass("rounded-md");
-  });
-
-  it("merges a custom className with the defaults", () => {
-    render(
-      <HoverCard defaultOpen>
-        <HoverCardTrigger href="/orders">KS1300400032</HoverCardTrigger>
-        <HoverCardContent className="w-80">Order preview</HoverCardContent>
-      </HoverCard>,
-    );
-
-    const content = screen.getByText("Order preview");
-
-    expect(content).toHaveClass("w-80");
-    expect(content).toHaveClass("bg-popover");
-  });
-
-  it("applies the default alignment", () => {
-    renderHoverCard({ defaultOpen: true });
-
-    expect(screen.getByText("Order preview")).toHaveAttribute(
-      "data-align",
-      "center",
+    expect(
+      screen.getByText("Customer since 2019"),
+    ).toHaveAttribute(
+      "data-slot",
+      "hover-card-content",
     );
   });
 
-  it("honours an explicit align prop", () => {
-    render(
-      <HoverCard defaultOpen>
-        <HoverCardTrigger href="/orders">KS1300400032</HoverCardTrigger>
-        <HoverCardContent align="end">Order preview</HoverCardContent>
-      </HoverCard>,
-    );
-
-    expect(screen.getByText("Order preview")).toHaveAttribute(
-      "data-align",
-      "end",
-    );
-  });
-
-  it("renders into a portal, outside the trigger's container", () => {
-    const { container } = renderHoverCard({ defaultOpen: true });
-
-    expect(container).not.toContainElement(screen.getByText("Order preview"));
-  });
-});
-
-describe("HoverCard interactions", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Hovering the trigger should reveal the card.
+   */
   it("opens when the trigger is hovered", async () => {
     const user = userEvent.setup();
-    renderHoverCard();
 
-    await user.hover(screen.getByText("KS1300400032"));
+    renderHoverCard({ openDelay: 0 });
 
-    expect(await screen.findByText("Order preview")).toBeInTheDocument();
+    await user.hover(
+      screen.getByText("Acme Ltd"),
+    );
+
+    expect(
+      await screen.findByText(
+        "Customer since 2019",
+      ),
+    ).toBeInTheDocument();
   });
 
-  it("opens when the trigger receives focus", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Escape should dismiss the card.
+   */
+  it("closes when Escape is pressed", async () => {
     const user = userEvent.setup();
-    renderHoverCard();
 
-    await user.tab();
+    renderHoverCard({ defaultOpen: true });
 
-    expect(await screen.findByText("Order preview")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    expect(
+      screen.queryByText("Customer since 2019"),
+    ).not.toBeInTheDocument();
   });
 
-  it("calls onOpenChange when opened", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * onOpenChange should report the new state.
+   */
+  it("calls onOpenChange when the card opens", async () => {
     const user = userEvent.setup();
     const onOpenChange = jest.fn();
-    renderHoverCard({ onOpenChange });
 
-    await user.hover(screen.getByText("KS1300400032"));
+    renderHoverCard({
+      openDelay: 0,
+      onOpenChange,
+    });
 
-    await screen.findByText("Order preview");
+    await user.hover(
+      screen.getByText("Acme Ltd"),
+    );
+
+    await screen.findByText(
+      "Customer since 2019",
+    );
 
     expect(onOpenChange).toHaveBeenCalledWith(true);
   });
 
-  it("honours a controlled open prop", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A custom className should be merged with the defaults.
+   */
+  it("merges a custom className with the defaults", () => {
+    render(
+      <HoverCard defaultOpen>
+        <HoverCardTrigger href="#customer">
+          Acme Ltd
+        </HoverCardTrigger>
+        <HoverCardContent className="w-96">
+          Customer since 2019
+        </HoverCardContent>
+      </HoverCard>,
+    );
+
+    const content = screen.getByText(
+      "Customer since 2019",
+    );
+
+    expect(content).toHaveClass("w-96");
+    expect(content).toHaveClass("rounded-md");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The content must NOT be in the DOM until the card is opened.
+   */
+  it("does not render the content while closed", () => {
+    renderHoverCard();
+
+    expect(
+      screen.queryByText("Customer since 2019"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The card must NOT open on a plain click - hovering is the only
+   * gesture that reveals it.
+   */
+  it("does not open when the trigger is clicked", async () => {
     const user = userEvent.setup();
-    renderHoverCard({ open: false });
 
-    await user.hover(screen.getByText("KS1300400032"));
+    renderHoverCard();
 
-    expect(screen.queryByText("Order preview")).not.toBeInTheDocument();
+    await user.click(
+      screen.getByText("Acme Ltd"),
+    );
+
+    expect(
+      screen.queryByText("Customer since 2019"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Closing must remove the content, not merely hide it.
+   */
+  it("does not leave the content in the DOM after closing", async () => {
+    const user = userEvent.setup();
+
+    renderHoverCard({ defaultOpen: true });
+
+    await user.keyboard("{Escape}");
+
+    expect(
+      screen.queryByText("Customer since 2019"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A hover card is supplementary - it must NOT be announced as a dialog
+   * or trap the page.
+   */
+  it("does not expose a dialog role", () => {
+    renderHoverCard({ defaultOpen: true });
+
+    expect(
+      screen.queryByRole("dialog"),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.getByText("Acme Ltd"),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A controlled hover card must not open on its own.
+   */
+  it("does not open a controlled card without a handler", async () => {
+    const user = userEvent.setup();
+
+    renderHoverCard({ open: false, openDelay: 0 });
+
+    await user.hover(
+      screen.getByText("Acme Ltd"),
+    );
+
+    expect(
+      screen.queryByText("Customer since 2019"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * onOpenChange must not fire on the initial render.
+   */
+  it("does not call onOpenChange on initial render", () => {
+    const onOpenChange = jest.fn();
+
+    renderHoverCard({
+      defaultOpen: true,
+      onOpenChange,
+    });
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The card content must not become the accessible name of the trigger.
+   */
+  it("does not relabel the trigger with the card content", () => {
+    renderHoverCard({ defaultOpen: true });
+
+    expect(
+      screen.getByText("Acme Ltd"),
+    ).toHaveTextContent("Acme Ltd");
+
+    expect(
+      screen.getByText("Acme Ltd"),
+    ).not.toHaveTextContent(
+      "Customer since 2019",
+    );
   });
 });

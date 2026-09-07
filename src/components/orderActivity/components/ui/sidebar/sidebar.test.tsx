@@ -81,6 +81,12 @@ beforeEach(() => {
 });
 
 describe("useSidebar", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * throws outside a SidebarProvider.
+   */
   it("throws outside a SidebarProvider", () => {
     const spy = jest.spyOn(console, "error").mockImplementation(() => {});
 
@@ -91,6 +97,12 @@ describe("useSidebar", () => {
     spy.mockRestore();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * reports the expanded state by default.
+   */
   it("reports the expanded state by default", () => {
     const { result } = renderHook(() => useSidebar(), {
       wrapper: ({ children }) => <SidebarProvider>{children}</SidebarProvider>,
@@ -101,6 +113,12 @@ describe("useSidebar", () => {
     expect(result.current.isMobile).toBe(false);
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * honours defaultOpen={false}.
+   */
   it("honours defaultOpen={false}", () => {
     const { result } = renderHook(() => useSidebar(), {
       wrapper: ({ children }) => (
@@ -112,6 +130,12 @@ describe("useSidebar", () => {
     expect(result.current.open).toBe(false);
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * toggles the desktop sidebar.
+   */
   it("toggles the desktop sidebar", () => {
     const { result } = renderHook(() => useSidebar(), {
       wrapper: ({ children }) => <SidebarProvider>{children}</SidebarProvider>,
@@ -123,6 +147,12 @@ describe("useSidebar", () => {
     expect(result.current.state).toBe("collapsed");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * toggles the mobile sheet instead when on mobile.
+   */
   it("toggles the mobile sheet instead when on mobile", () => {
     mockUseIsMobile.mockReturnValue(true);
 
@@ -137,6 +167,12 @@ describe("useSidebar", () => {
     expect(result.current.open).toBe(true);
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * persists the state to a cookie.
+   */
   it("persists the state to a cookie", () => {
     const { result } = renderHook(() => useSidebar(), {
       wrapper: ({ children }) => <SidebarProvider>{children}</SidebarProvider>,
@@ -147,6 +183,12 @@ describe("useSidebar", () => {
     expect(document.cookie).toContain("sidebar_state=false");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * defers to onOpenChange when controlled.
+   */
   it("defers to onOpenChange when controlled", () => {
     const onOpenChange = jest.fn();
     const { result } = renderHook(() => useSidebar(), {
@@ -165,6 +207,12 @@ describe("useSidebar", () => {
 });
 
 describe("SidebarProvider", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders a wrapper with the sidebar width custom properties.
+   */
   it("renders a wrapper with the sidebar width custom properties", () => {
     const { container } = renderSidebar();
 
@@ -177,6 +225,12 @@ describe("SidebarProvider", () => {
     expect(wrapper.style.getPropertyValue("--sidebar-width-icon")).toBe("3rem");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * merges a custom className with the defaults.
+   */
   it("merges a custom className with the defaults", () => {
     const { container } = render(
       <SidebarProvider className="bg-red-500">
@@ -190,6 +244,12 @@ describe("SidebarProvider", () => {
     expect(wrapper).toHaveClass("flex");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * toggles the sidebar on Ctrl+B.
+   */
   it("toggles the sidebar on Ctrl+B", async () => {
     const user = userEvent.setup();
     const { container } = renderSidebar();
@@ -205,6 +265,12 @@ describe("SidebarProvider", () => {
 });
 
 describe("Sidebar", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders with the expanded state and default data attributes.
+   */
   it("renders with the expanded state and default data attributes", () => {
     const { container } = renderSidebar();
 
@@ -215,6 +281,12 @@ describe("Sidebar", () => {
     expect(sidebar).toHaveAttribute("data-variant", "sidebar");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * records the right side and the floating variant.
+   */
   it("records the right side and the floating variant", () => {
     const { container } = renderSidebar(
       {},
@@ -227,6 +299,12 @@ describe("Sidebar", () => {
     expect(sidebar).toHaveAttribute("data-variant", "floating");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * records the collapsible mode only while collapsed.
+   */
   it("records the collapsible mode only while collapsed", () => {
     const { container: expanded } = renderSidebar({}, { collapsible: "icon" });
 
@@ -244,6 +322,12 @@ describe("Sidebar", () => {
     ).toHaveAttribute("data-collapsible", "icon");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders a plain, non-collapsible panel for collapsible='none'.
+   */
   it("renders a plain, non-collapsible panel for collapsible='none'", () => {
     const { container } = renderSidebar({}, { collapsible: "none" });
 
@@ -254,6 +338,12 @@ describe("Sidebar", () => {
     expect(sidebar).not.toHaveAttribute("data-state");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders its children.
+   */
   it("renders its children", () => {
     renderSidebar();
 
@@ -261,6 +351,12 @@ describe("Sidebar", () => {
     expect(screen.getByText("Footer")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders a Sheet on mobile only once opened.
+   */
   it("renders a Sheet on mobile only once opened", async () => {
     mockUseIsMobile.mockReturnValue(true);
     const user = userEvent.setup();
@@ -279,6 +375,12 @@ describe("Sidebar", () => {
 });
 
 describe("SidebarTrigger and SidebarRail", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * render with screen-reader labels.
+   */
   it("render with screen-reader labels", () => {
     const { container } = renderSidebar();
 
@@ -294,6 +396,12 @@ describe("SidebarTrigger and SidebarRail", () => {
     ).toHaveAttribute("aria-label", "Toggle Sidebar");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * toggle the sidebar when the trigger is clicked.
+   */
   it("toggle the sidebar when the trigger is clicked", async () => {
     const user = userEvent.setup();
     const { container } = renderSidebar();
@@ -309,6 +417,12 @@ describe("SidebarTrigger and SidebarRail", () => {
     expect(sidebar).toHaveAttribute("data-state", "collapsed");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * still call a caller-supplied onClick on the trigger.
+   */
   it("still call a caller-supplied onClick on the trigger", async () => {
     const user = userEvent.setup();
     const onClick = jest.fn();
@@ -327,6 +441,12 @@ describe("SidebarTrigger and SidebarRail", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * keep the rail out of the tab order.
+   */
   it("keep the rail out of the tab order", () => {
     const { container } = renderSidebar();
 
@@ -338,6 +458,12 @@ describe("SidebarTrigger and SidebarRail", () => {
 });
 
 describe("Sidebar layout parts", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * set the correct data-slot and data-sidebar attributes.
+   */
   it("set the correct data-slot and data-sidebar attributes", () => {
     const { container } = renderSidebar();
 
@@ -364,6 +490,12 @@ describe("Sidebar layout parts", () => {
     });
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * render SidebarInset as a main landmark.
+   */
   it("render SidebarInset as a main landmark", () => {
     renderSidebar();
 
@@ -373,6 +505,12 @@ describe("Sidebar layout parts", () => {
     expect(inset).toHaveClass("flex-1");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * render SidebarMenu as a list of items.
+   */
   it("render SidebarMenu as a list of items", () => {
     const { container } = renderSidebar();
 
@@ -384,6 +522,12 @@ describe("Sidebar layout parts", () => {
     ).toBe("LI");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * render SidebarInput with the sidebar input slot.
+   */
   it("render SidebarInput with the sidebar input slot", () => {
     const { container } = render(
       <SidebarProvider>
@@ -414,6 +558,12 @@ describe("SidebarMenuButton", () => {
     );
   }
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * applies the default variant and size.
+   */
   it("applies the default variant and size", () => {
     renderButton();
 
@@ -424,6 +574,12 @@ describe("SidebarMenuButton", () => {
     expect(button).toHaveClass("h-8");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * records the active state.
+   */
   it("records the active state", () => {
     renderButton({ isActive: true });
 
@@ -433,6 +589,12 @@ describe("SidebarMenuButton", () => {
     );
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * applies the outline variant.
+   */
   it("applies the outline variant", () => {
     renderButton({ variant: "outline" });
 
@@ -452,6 +614,12 @@ describe("SidebarMenuButton", () => {
     );
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders as the child element when asChild is set.
+   */
   it("renders as the child element when asChild is set", () => {
     render(
       <SidebarProvider>
@@ -470,6 +638,12 @@ describe("SidebarMenuButton", () => {
     expect(link).toHaveAttribute("data-slot", "sidebar-menu-button");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * merges a custom className with the variant classes.
+   */
   it("merges a custom className with the variant classes", () => {
     renderButton({ className: "font-bold" });
 
@@ -479,6 +653,12 @@ describe("SidebarMenuButton", () => {
     expect(button).toHaveClass("rounded-md");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * wraps the button in a tooltip when a tooltip string is given.
+   */
   it("wraps the button in a tooltip when a tooltip string is given", async () => {
     const user = userEvent.setup();
     renderButton({ tooltip: "All orders" }, { defaultOpen: false });
@@ -488,6 +668,12 @@ describe("SidebarMenuButton", () => {
     expect(await screen.findByRole("tooltip")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * hides the tooltip while the sidebar is expanded.
+   */
   it("hides the tooltip while the sidebar is expanded", async () => {
     const user = userEvent.setup();
     const { baseElement } = renderButton({ tooltip: "All orders" });
@@ -503,6 +689,12 @@ describe("SidebarMenuButton", () => {
 });
 
 describe("SidebarMenuAction, SidebarMenuBadge and SidebarMenuSkeleton", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * set their data attributes.
+   */
   it("set their data attributes", () => {
     const { container } = render(
       <SidebarProvider>
@@ -530,6 +722,12 @@ describe("SidebarMenuAction, SidebarMenuBadge and SidebarMenuSkeleton", () => {
     ).toHaveAttribute("data-sidebar", "menu-skeleton");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders a skeleton icon only when asked.
+   */
   it("renders a skeleton icon only when asked", () => {
     const { container, rerender } = render(
       <SidebarProvider>
@@ -554,6 +752,12 @@ describe("SidebarMenuAction, SidebarMenuBadge and SidebarMenuSkeleton", () => {
 });
 
 describe("SidebarMenuSub", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * sets the correct data attributes on the sub menu parts.
+   */
   it("sets the correct data attributes on the sub menu parts", () => {
     const { container } = render(
       <SidebarProvider>
@@ -576,6 +780,12 @@ describe("SidebarMenuSub", () => {
     ).toHaveAttribute("data-sidebar", "menu-sub-button");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * marks an active sub button.
+   */
   it("marks an active sub button", () => {
     const { container } = render(
       <SidebarProvider>
@@ -590,5 +800,212 @@ describe("SidebarMenuSub", () => {
     expect(
       container.querySelector("[data-slot='sidebar-menu-sub-button']"),
     ).toHaveAttribute("data-active", "true");
+  });
+});
+
+/**
+ * ============================================================================
+ * Sidebar - additional negative scenarios
+ * ============================================================================
+ */
+describe("Sidebar negative scenarios", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * An expanded sidebar must NOT report itself as collapsed.
+   */
+  it("does not report an expanded sidebar as collapsed", () => {
+    const { container } = renderSidebar();
+
+    expect(
+      container.querySelector(
+        "[data-slot='sidebar']",
+      ),
+    ).toHaveAttribute("data-state", "expanded");
+
+    expect(
+      container.querySelector(
+        "[data-slot='sidebar']",
+      ),
+    ).not.toHaveAttribute(
+      "data-state",
+      "collapsed",
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A controlled sidebar must not toggle itself when no handler is given.
+   */
+  it("does not toggle a controlled sidebar without a handler", async () => {
+    const user = userEvent.setup();
+
+    const { container } = renderSidebar({
+      open: true,
+    });
+
+    await user.click(
+      container.querySelector(
+        "[data-slot='sidebar-trigger']",
+      ) as HTMLElement,
+    );
+
+    expect(
+      container.querySelector(
+        "[data-slot='sidebar']",
+      ),
+    ).toHaveAttribute("data-state", "expanded");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * onOpenChange must not fire on the initial render.
+   */
+  it("does not call onOpenChange on initial render", () => {
+    const onOpenChange = jest.fn();
+
+    renderSidebar({
+      defaultOpen: false,
+      onOpenChange,
+    });
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Keys other than the shortcut must not toggle the sidebar.
+   */
+  it("does not toggle on a key that is not the shortcut", async () => {
+    const user = userEvent.setup();
+
+    const { container } = renderSidebar();
+
+    await user.keyboard("{Control>}a{/Control}");
+    await user.keyboard("b");
+
+    expect(
+      container.querySelector(
+        "[data-slot='sidebar']",
+      ),
+    ).toHaveAttribute("data-state", "expanded");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * On desktop the mobile sheet must NOT be rendered.
+   */
+  it("does not render the mobile sheet on desktop", () => {
+    renderSidebar();
+
+    expect(
+      screen.queryByRole("dialog"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A left sidebar must not be marked as being on the right.
+   */
+  it("does not report the wrong side", () => {
+    const { container } = renderSidebar(
+      {},
+      { side: "left" },
+    );
+
+    expect(
+      container.querySelector(
+        "[data-slot='sidebar']",
+      ),
+    ).not.toHaveAttribute("data-side", "right");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A menu button that is not active must not be marked active.
+   */
+  it("does not mark an inactive menu button as active", () => {
+    const { container } = renderSidebar();
+
+    expect(
+      container.querySelector(
+        "[data-slot='sidebar-menu-button']",
+      ),
+    ).not.toHaveAttribute("data-active", "true");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A badge is a count, not a control - it must never be focusable.
+   */
+  it("does not make the menu badge interactive", () => {
+    const { container } = renderSidebar();
+
+    const badge = container.querySelector(
+      "[data-slot='sidebar-menu-badge']",
+    ) as HTMLElement;
+
+    expect(badge.tagName).not.toBe("BUTTON");
+    expect(badge).not.toHaveAttribute("tabindex");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A skeleton is a placeholder - it must not be announced as a control.
+   */
+  it("does not expose the menu skeleton as a control", () => {
+    const { container } = render(
+      <SidebarProvider>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuSkeleton />
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarProvider>,
+    );
+
+    expect(
+      container.querySelector(
+        "[data-slot='sidebar-menu-skeleton']",
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByRole("button"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A tooltip must NOT be shown while the sidebar is expanded, because
+   * the label is already visible.
+   */
+  it("does not render a tooltip for a plain menu button", () => {
+    const { container } = renderSidebar();
+
+    expect(
+      container.querySelector(
+        "[data-slot='tooltip-content']",
+      ),
+    ).not.toBeInTheDocument();
   });
 });

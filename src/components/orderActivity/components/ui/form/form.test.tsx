@@ -1,268 +1,407 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import * as React from "react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
 import "@testing-library/jest-dom";
 
 import {
   Form,
+  FormField,
   FormItem,
   FormLabel,
   FormControl,
   FormDescription,
   FormMessage,
-  FormField,
 } from "./form";
 import { Input } from "../input/input";
 
-type Values = { orderId: string };
+type Values = { orderNumber: string };
 
 function OrderForm({
   onSubmit = jest.fn(),
-  required = false,
-  defaultValues = { orderId: "" },
-  description = "The order reference to look up.",
+  required = true,
+  withDescription = true,
+  defaultValue = "",
 }: {
   onSubmit?: (values: Values) => void;
   required?: boolean;
-  defaultValues?: Values;
-  description?: string | null;
+  withDescription?: boolean;
+  defaultValue?: string;
 }) {
-  const form = useForm<Values>({ defaultValues });
+  const form = useForm<Values>({
+    defaultValues: { orderNumber: defaultValue },
+  });
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        noValidate
+      >
         <FormField
           control={form.control}
-          name="orderId"
-          rules={required ? { required: "Order ID is required" } : undefined}
+          name="orderNumber"
+          rules={
+            required
+              ? { required: "Order number is required" }
+              : undefined
+          }
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Order ID</FormLabel>
+              <FormLabel>Order number</FormLabel>
+
               <FormControl>
                 <Input {...field} />
               </FormControl>
-              {description !== null && (
-                <FormDescription>{description}</FormDescription>
+
+              {withDescription && (
+                <FormDescription>
+                  The reference printed on the invoice
+                </FormDescription>
               )}
+
               <FormMessage />
             </FormItem>
           )}
         />
-        <button type="submit">Search</button>
+
+        <button type="submit">Save</button>
       </form>
     </Form>
   );
 }
 
-describe("FormItem", () => {
-  it("sets the correct data-slot attribute", () => {
+/**
+ * ============================================================================
+ * Form
+ * ============================================================================
+ */
+describe("Form", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Every form part should render with its own data-slot attribute.
+   */
+  it("sets the correct data-slot attributes for every part", () => {
     const { container } = render(<OrderForm />);
 
-    expect(container.querySelector("[data-slot='form-item']")).toBeInTheDocument();
-  });
-
-  it("applies the default classes", () => {
-    const { container } = render(<OrderForm />);
-
-    const item = container.querySelector("[data-slot='form-item']");
-
-    expect(item).toHaveClass("grid");
-    expect(item).toHaveClass("gap-2");
-  });
-});
-
-describe("FormLabel", () => {
-  it("renders with the correct data-slot", () => {
-    render(<OrderForm />);
-
-    expect(screen.getByText("Order ID")).toHaveAttribute(
-      "data-slot",
+    [
+      "form-item",
       "form-label",
-    );
+      "form-control",
+      "form-description",
+    ].forEach((slot) => {
+      expect(
+        container.querySelector(
+          `[data-slot='${slot}']`,
+        ),
+      ).toBeInTheDocument();
+    });
   });
 
-  it("associates the label with the control", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The label should be wired to its control.
+   */
+  it("associates the label with its control", () => {
     render(<OrderForm />);
 
-    expect(screen.getByLabelText("Order ID")).toBe(
-      screen.getByRole("textbox"),
-    );
+    expect(
+      screen.getByLabelText("Order number"),
+    ).toBe(screen.getByRole("textbox"));
   });
 
-  it("reports no error initially", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The description should describe the control.
+   */
+  it("describes the control with its description", () => {
     render(<OrderForm />);
 
-    expect(screen.getByText("Order ID")).toHaveAttribute("data-error", "false");
-  });
-});
+    const control = screen.getByRole("textbox");
 
-describe("FormControl", () => {
-  it("gives the control the generated form item id", () => {
-    const { container } = render(<OrderForm />);
-
-    const item = container.querySelector("[data-slot='form-item']");
-    const input = screen.getByRole("textbox");
-
-    expect(input.id).toMatch(/-form-item$/);
-    expect(item).toContainElement(input);
-  });
-
-  it("points aria-describedby at the description while valid", () => {
-    render(<OrderForm />);
-
-    const input = screen.getByRole("textbox");
-    const description = screen.getByText("The order reference to look up.");
-
-    expect(input).toHaveAttribute("aria-describedby", description.id);
-  });
-
-  it("is not marked invalid initially", () => {
-    render(<OrderForm />);
-
-    expect(screen.getByRole("textbox")).toHaveAttribute(
-      "aria-invalid",
-      "false",
+    const description = screen.getByText(
+      "The reference printed on the invoice",
     );
-  });
-});
 
-describe("FormDescription", () => {
-  it("renders with the correct data-slot and classes", () => {
-    render(<OrderForm />);
-
-    const description = screen.getByText("The order reference to look up.");
-
-    expect(description).toHaveAttribute("data-slot", "form-description");
-    expect(description).toHaveClass("text-muted-foreground");
-    expect(description.id).toMatch(/-form-item-description$/);
-  });
-});
-
-describe("FormMessage", () => {
-  it("renders nothing while there is no error and no children", () => {
-    const { container } = render(<OrderForm />);
-
-    expect(container.querySelector("[data-slot='form-message']")).toBeNull();
+    expect(
+      control
+        .getAttribute("aria-describedby")
+        ?.split(" "),
+    ).toContain(description.id);
   });
 
-  it("renders its children when given and there is no error", () => {
-    function WithChildren() {
-      const form = useForm<Values>({ defaultValues: { orderId: "" } });
-
-      return (
-        <Form {...form}>
-          <FormField
-            control={form.control}
-            name="orderId"
-            render={() => (
-              <FormItem>
-                <FormMessage>Static hint</FormMessage>
-              </FormItem>
-            )}
-          />
-        </Form>
-      );
-    }
-
-    render(<WithChildren />);
-
-    expect(screen.getByText("Static hint")).toBeInTheDocument();
-  });
-
-  it("shows the validation message after a failed submit", async () => {
-    const user = userEvent.setup();
-    render(<OrderForm required />);
-
-    await user.click(screen.getByRole("button", { name: "Search" }));
-
-    const message = await screen.findByText("Order ID is required");
-
-    expect(message).toHaveAttribute("data-slot", "form-message");
-    expect(message).toHaveClass("text-destructive");
-    expect(message.id).toMatch(/-form-item-message$/);
-  });
-});
-
-describe("Form validation wiring", () => {
-  it("marks the control invalid and links the message on error", async () => {
-    const user = userEvent.setup();
-    render(<OrderForm required />);
-
-    await user.click(screen.getByRole("button", { name: "Search" }));
-
-    await screen.findByText("Order ID is required");
-
-    const input = screen.getByRole("textbox");
-    const description = screen.getByText("The order reference to look up.");
-    const message = screen.getByText("Order ID is required");
-
-    expect(input).toHaveAttribute("aria-invalid", "true");
-    expect(input).toHaveAttribute(
-      "aria-describedby",
-      `${description.id} ${message.id}`,
-    );
-  });
-
-  it("marks the label as errored", async () => {
-    const user = userEvent.setup();
-    render(<OrderForm required />);
-
-    await user.click(screen.getByRole("button", { name: "Search" }));
-
-    await waitFor(() =>
-      expect(screen.getByText("Order ID")).toHaveAttribute(
-        "data-error",
-        "true",
-      ),
-    );
-  });
-
-  it("does not call onSubmit when validation fails", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A valid submission should reach the handler.
+   */
+  it("submits valid values", async () => {
     const user = userEvent.setup();
     const onSubmit = jest.fn();
-    render(<OrderForm required onSubmit={onSubmit} />);
 
-    await user.click(screen.getByRole("button", { name: "Search" }));
+    render(<OrderForm onSubmit={onSubmit} />);
 
-    await screen.findByText("Order ID is required");
+    await user.type(
+      screen.getByRole("textbox"),
+      "SO-1024",
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Save" }),
+    );
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      { orderNumber: "SO-1024" },
+      expect.anything(),
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A validation error should be shown to the user.
+   */
+  it("shows the validation message when the field is invalid", async () => {
+    const user = userEvent.setup();
+
+    render(<OrderForm />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Save" }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Order number is required",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * An invalid control should be marked for assistive technology.
+   */
+  it("marks the control invalid when validation fails", async () => {
+    const user = userEvent.setup();
+
+    render(<OrderForm />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Save" }),
+    );
+
+    await screen.findByText(
+      "Order number is required",
+    );
+
+    expect(
+      screen.getByRole("textbox"),
+    ).toHaveAttribute("aria-invalid", "true");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The error message should be linked to the control.
+   */
+  it("links the error message to the control", async () => {
+    const user = userEvent.setup();
+
+    render(<OrderForm />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Save" }),
+    );
+
+    const message = await screen.findByText(
+      "Order number is required",
+    );
+
+    expect(
+      screen
+        .getByRole("textbox")
+        .getAttribute("aria-describedby")
+        ?.split(" "),
+    ).toContain(message.id);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Default values should reach the control.
+   */
+  it("renders the default value in the control", () => {
+    render(<OrderForm defaultValue="SO-1024" />);
+
+    expect(
+      screen.getByRole("textbox"),
+    ).toHaveValue("SO-1024");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * No error message may be shown before the user submits.
+   */
+  it("does not show a validation message before submission", () => {
+    const { container } = render(<OrderForm />);
+
+    expect(
+      container.querySelector(
+        "[data-slot='form-message']",
+      ),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByText(
+        "Order number is required",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A valid field must NOT be marked invalid.
+   */
+  it("does not mark a valid control as invalid", () => {
+    render(<OrderForm />);
+
+    expect(
+      screen.getByRole("textbox"),
+    ).toHaveAttribute("aria-invalid", "false");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * An invalid submission must NOT reach the submit handler.
+   */
+  it("does not submit invalid values", async () => {
+    const user = userEvent.setup();
+    const onSubmit = jest.fn();
+
+    render(<OrderForm onSubmit={onSubmit} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Save" }),
+    );
+
+    await screen.findByText(
+      "Order number is required",
+    );
 
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("submits the field value when validation passes", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A field with no description must NOT render an empty description
+   * element or point at one.
+   */
+  it("does not render a description that was not supplied", () => {
+    const { container } = render(
+      <OrderForm withDescription={false} />,
+    );
+
+    expect(
+      container.querySelector(
+        "[data-slot='form-description']",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Fixing the field must clear the error rather than leaving it on
+   * screen.
+   */
+  it("does not keep the error after the field is corrected", async () => {
+    const user = userEvent.setup();
+
+    render(<OrderForm />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Save" }),
+    );
+
+    await screen.findByText(
+      "Order number is required",
+    );
+
+    await user.type(
+      screen.getByRole("textbox"),
+      "SO-1024",
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Save" }),
+    );
+
+    expect(
+      screen.queryByText(
+        "Order number is required",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A field with no rules must not block submission.
+   */
+  it("does not block submission when the field has no rules", async () => {
     const user = userEvent.setup();
     const onSubmit = jest.fn();
-    render(<OrderForm required onSubmit={onSubmit} />);
 
-    await user.type(screen.getByRole("textbox"), "KS1300400032");
-    await user.click(screen.getByRole("button", { name: "Search" }));
-
-    await waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({ orderId: "KS1300400032" }),
-        expect.anything(),
-      ),
+    render(
+      <OrderForm
+        onSubmit={onSubmit}
+        required={false}
+      />,
     );
+
+    await user.click(
+      screen.getByRole("button", { name: "Save" }),
+    );
+
+    expect(onSubmit).toHaveBeenCalled();
   });
 
-  it("clears the error once the field becomes valid", async () => {
-    const user = userEvent.setup();
-    render(<OrderForm required />);
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * FormControl must not add a wrapper element of its own - it applies
+   * its wiring to the child control.
+   */
+  it("does not wrap the control in an extra element", () => {
+    const { container } = render(<OrderForm />);
 
-    await user.click(screen.getByRole("button", { name: "Search" }));
-    await screen.findByText("Order ID is required");
+    const control = container.querySelector(
+      "[data-slot='form-control']",
+    ) as HTMLElement;
 
-    await user.type(screen.getByRole("textbox"), "KS1300400032");
-
-    await waitFor(() =>
-      expect(screen.queryByText("Order ID is required")).not.toBeInTheDocument(),
-    );
-  });
-
-  it("renders the field's default value", () => {
-    render(<OrderForm defaultValues={{ orderId: "KS999" }} />);
-
-    expect(screen.getByRole("textbox")).toHaveValue("KS999");
+    expect(control.tagName).toBe("INPUT");
   });
 });

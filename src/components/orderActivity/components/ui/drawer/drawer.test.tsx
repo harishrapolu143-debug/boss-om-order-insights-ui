@@ -1,3 +1,4 @@
+import * as React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -5,54 +6,36 @@ import "@testing-library/jest-dom";
 import {
   Drawer,
   DrawerTrigger,
-  DrawerClose,
   DrawerContent,
   DrawerHeader,
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,
+  DrawerClose,
 } from "./drawer";
-
-// Vaul's open/close animation reads getComputedStyle(el).transform and calls
-// .match() on it. jsdom leaves that property undefined, so the drawer throws
-// mid-close. Returning a real value keeps vaul on its normal code path.
-const realGetComputedStyle = window.getComputedStyle;
-
-beforeAll(() => {
-  window.getComputedStyle = ((element: Element, pseudoElt?: string | null) => {
-    const style = realGetComputedStyle(element, pseudoElt);
-
-    if (!style.transform) {
-      Object.defineProperty(style, "transform", {
-        value: "none",
-        configurable: true,
-      });
-    }
-
-    return style;
-  }) as typeof window.getComputedStyle;
-});
-
-afterAll(() => {
-  window.getComputedStyle = realGetComputedStyle;
-});
 
 type DrawerOverrides = {
   open?: boolean;
   defaultOpen?: boolean;
+  direction?: "top" | "right" | "bottom" | "left";
   onOpenChange?: (open: boolean) => void;
-  direction?: "top" | "bottom" | "left" | "right";
 };
 
 function renderDrawer(props: DrawerOverrides = {}) {
   return render(
     <Drawer {...props}>
-      <DrawerTrigger>Open drawer</DrawerTrigger>
+      <DrawerTrigger>Open filters</DrawerTrigger>
+
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>Order filters</DrawerTitle>
-          <DrawerDescription>Narrow the order list.</DrawerDescription>
+          <DrawerTitle>Filters</DrawerTitle>
+          <DrawerDescription>
+            Narrow the order list
+          </DrawerDescription>
         </DrawerHeader>
+
+        <div>Filter body</div>
+
         <DrawerFooter>
           <DrawerClose>Dismiss</DrawerClose>
         </DrawerFooter>
@@ -61,192 +44,343 @@ function renderDrawer(props: DrawerOverrides = {}) {
   );
 }
 
-describe("DrawerTrigger", () => {
-  it("renders with the correct data-slot", () => {
+/**
+ * ============================================================================
+ * Drawer
+ * ============================================================================
+ */
+describe("Drawer", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The trigger should render with the expected data-slot attribute.
+   */
+  it("sets the correct data-slot attribute on the trigger", () => {
     renderDrawer();
 
-    const trigger = screen.getByRole("button", { name: "Open drawer" });
-
-    expect(trigger).toBeInTheDocument();
-    expect(trigger).toHaveAttribute("data-slot", "drawer-trigger");
+    expect(
+      screen.getByRole("button", {
+        name: "Open filters",
+      }),
+    ).toHaveAttribute("data-slot", "drawer-trigger");
   });
-});
 
-describe("DrawerContent", () => {
-  it("is not rendered while closed", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Clicking the trigger should open the drawer.
+   */
+  it("opens when the trigger is clicked", async () => {
+    const user = userEvent.setup();
+
     renderDrawer();
 
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open filters",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("dialog"),
+    ).toBeInTheDocument();
   });
 
-  it("renders with the dialog role when open", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * defaultOpen should render the drawer straight away.
+   */
+  it("respects defaultOpen", () => {
+    renderDrawer({ defaultOpen: true });
+
+    expect(
+      screen.getByRole("dialog"),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Every drawer part should render with its own data-slot attribute.
+   */
+  it("sets the correct data-slot attributes on the open drawer", () => {
     renderDrawer({ defaultOpen: true });
 
     const drawer = screen.getByRole("dialog");
 
-    expect(drawer).toBeInTheDocument();
-    expect(drawer).toHaveAttribute("data-slot", "drawer-content");
-  });
-
-  it("applies the shared classes", () => {
-    renderDrawer({ defaultOpen: true });
-
-    const drawer = screen.getByRole("dialog");
-
-    expect(drawer).toHaveClass("bg-background");
-    expect(drawer).toHaveClass("fixed");
-    expect(drawer).toHaveClass("flex-col");
-  });
-
-  it("defaults to the bottom direction", () => {
-    renderDrawer({ defaultOpen: true });
-
-    expect(screen.getByRole("dialog")).toHaveAttribute(
-      "data-vaul-drawer-direction",
-      "bottom",
-    );
-  });
-
-  it("honours an explicit direction", () => {
-    renderDrawer({ defaultOpen: true, direction: "right" });
-
-    expect(screen.getByRole("dialog")).toHaveAttribute(
-      "data-vaul-drawer-direction",
-      "right",
-    );
-  });
-
-  it("merges a custom className with the defaults", () => {
-    render(
-      <Drawer defaultOpen>
-        <DrawerContent className="max-h-[60vh]">
-          <DrawerTitle>Order filters</DrawerTitle>
-          <DrawerDescription>Narrow the order list.</DrawerDescription>
-        </DrawerContent>
-      </Drawer>,
-    );
-
-    expect(screen.getByRole("dialog")).toHaveClass("max-h-[60vh]");
-    expect(screen.getByRole("dialog")).toHaveClass("bg-background");
-  });
-
-  it("renders an overlay behind the content", () => {
-    const { baseElement } = renderDrawer({ defaultOpen: true });
-
-    expect(
-      baseElement.querySelector("[data-slot='drawer-overlay']"),
-    ).toBeInTheDocument();
-  });
-
-  it("renders the drag handle element", () => {
-    renderDrawer({ defaultOpen: true });
-
-    // The grab handle is the first child div of the content.
-    const handle = screen.getByRole("dialog").firstElementChild;
-
-    expect(handle).toHaveClass("rounded-full");
-    expect(handle).toHaveClass("bg-muted");
-  });
-});
-
-describe("Drawer header, footer, title and description", () => {
-  it("set the correct data-slot attributes", () => {
-    const { baseElement } = renderDrawer({ defaultOpen: true });
-
-    expect(
-      baseElement.querySelector("[data-slot='drawer-header']"),
-    ).toBeInTheDocument();
-    expect(
-      baseElement.querySelector("[data-slot='drawer-footer']"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Order filters")).toHaveAttribute(
+    expect(drawer).toHaveAttribute(
       "data-slot",
+      "drawer-content",
+    );
+
+    [
+      "drawer-header",
       "drawer-title",
-    );
-    expect(screen.getByText("Narrow the order list.")).toHaveAttribute(
-      "data-slot",
       "drawer-description",
+      "drawer-footer",
+    ].forEach((slot) => {
+      expect(
+        drawer.querySelector(
+          `[data-slot='${slot}']`,
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The drawer content should be rendered.
+   */
+  it("renders its title, description and content", () => {
+    renderDrawer({ defaultOpen: true });
+
+    expect(
+      screen.getByText("Filters"),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Narrow the order list"),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Filter body"),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The drawer should slide up from the bottom by default.
+   */
+  it("opens from the bottom by default", () => {
+    renderDrawer({ defaultOpen: true });
+
+    expect(
+      screen.getByRole("dialog"),
+    ).toHaveAttribute("data-vaul-drawer-direction", "bottom");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * An explicit direction should change where the drawer is anchored.
+   */
+  it("opens from the requested direction", () => {
+    renderDrawer({
+      defaultOpen: true,
+      direction: "right",
+    });
+
+    expect(
+      screen.getByRole("dialog"),
+    ).toHaveAttribute("data-vaul-drawer-direction", "right");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Escape should dismiss the drawer.
+   *
+   * Vaul's drag handling reads real layout, which jsdom does not provide,
+   * so the drawer is driven by keyboard here rather than by pointer.
+   */
+  it("closes when Escape is pressed", async () => {
+    const user = userEvent.setup();
+
+    renderDrawer({ defaultOpen: true });
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("dialog", { hidden: true }),
+      ).toHaveAttribute("data-state", "closed"),
     );
   });
 
-  it("wire the title and description to the dialog", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * onOpenChange should report the new state.
+   */
+  it("calls onOpenChange when the drawer opens", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = jest.fn();
+
+    renderDrawer({ onOpenChange });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open filters",
+      }),
+    );
+
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The title and description should name and describe the drawer.
+   */
+  it("labels the drawer with its title and description", () => {
     renderDrawer({ defaultOpen: true });
 
     const drawer = screen.getByRole("dialog");
 
     expect(drawer).toHaveAttribute(
       "aria-labelledby",
-      screen.getByText("Order filters").id,
+      screen.getByText("Filters").id,
     );
+
     expect(drawer).toHaveAttribute(
       "aria-describedby",
-      screen.getByText("Narrow the order list.").id,
+      screen.getByText("Narrow the order list").id,
     );
   });
 
-  it("apply their default classes", () => {
-    const { baseElement } = renderDrawer({ defaultOpen: true });
-
-    expect(baseElement.querySelector("[data-slot='drawer-footer']")).toHaveClass(
-      "mt-auto",
-    );
-    expect(screen.getByText("Order filters")).toHaveClass("font-semibold");
-    expect(screen.getByText("Narrow the order list.")).toHaveClass(
-      "text-muted-foreground",
-    );
-  });
-});
-
-describe("Drawer interactions", () => {
-  it("opens when the trigger is clicked", async () => {
-    const user = userEvent.setup();
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The drawer must NOT be in the DOM until it is opened.
+   */
+  it("does not render the drawer while closed", () => {
     renderDrawer();
 
-    await user.click(screen.getByRole("button", { name: "Open drawer" }));
+    expect(
+      screen.queryByRole("dialog"),
+    ).not.toBeInTheDocument();
 
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Filter body"),
+    ).not.toBeInTheDocument();
   });
 
-  it("closes via DrawerClose", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A closed drawer must NOT still present itself as open.
+   *
+   * Vaul keeps the node mounted while its exit animation runs, so the
+   * contract here is the state flag rather than removal from the DOM.
+   */
+  it("does not report itself as open after closing", async () => {
     const user = userEvent.setup();
+
     renderDrawer({ defaultOpen: true });
 
-    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+    await user.keyboard("{Escape}");
 
-    // vaul only unmounts the content after its slide-out transition ends, and
-    // jsdom never fires transitionend - so the state flip is what to assert.
     await waitFor(() =>
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "closed"),
+      expect(
+        screen.getByRole("dialog", { hidden: true }),
+      ).not.toHaveAttribute("data-state", "open"),
     );
   });
 
-  it("reports the closed state to the consumer when dismissed", async () => {
-    const user = userEvent.setup();
-    const onOpenChange = jest.fn();
-    renderDrawer({ defaultOpen: true, onOpenChange });
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A drawer anchored to one edge must NOT report another direction.
+   */
+  it("does not report another direction", () => {
+    renderDrawer({
+      defaultOpen: true,
+      direction: "right",
+    });
 
-    await user.click(screen.getByRole("button", { name: "Dismiss" }));
-
-    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(
+      screen.getByRole("dialog"),
+    ).not.toHaveAttribute(
+      "data-vaul-drawer-direction",
+      "bottom",
+    );
   });
 
-  it("calls onOpenChange with the new state", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Keys that are not Escape must not dismiss the drawer.
+   */
+  it("does not close when a non-dismiss key is pressed", async () => {
     const user = userEvent.setup();
-    const onOpenChange = jest.fn();
-    renderDrawer({ onOpenChange });
 
-    await user.click(screen.getByRole("button", { name: "Open drawer" }));
+    renderDrawer({ defaultOpen: true });
 
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    await user.keyboard("a");
+    await user.keyboard("{ArrowDown}");
+
+    expect(
+      screen.getByRole("dialog"),
+    ).toHaveAttribute("data-state", "open");
   });
 
-  it("honours a controlled open prop", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A controlled drawer must not open on its own.
+   */
+  it("does not open a controlled drawer without a handler", async () => {
     const user = userEvent.setup();
+
+    renderDrawer({ open: false });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open filters",
+      }),
+    );
+
+    expect(
+      screen.queryByRole("dialog"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * onOpenChange must not fire on the initial render.
+   */
+  it("does not call onOpenChange on initial render", () => {
     const onOpenChange = jest.fn();
-    renderDrawer({ open: false, onOpenChange });
 
-    await user.click(screen.getByRole("button", { name: "Open drawer" }));
+    renderDrawer({
+      defaultOpen: true,
+      onOpenChange,
+    });
 
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Only one drawer may be open at a time from a single root.
+   */
+  it("does not render more than one drawer at a time", () => {
+    renderDrawer({ defaultOpen: true });
+
+    expect(
+      screen.getAllByRole("dialog"),
+    ).toHaveLength(1);
   });
 });

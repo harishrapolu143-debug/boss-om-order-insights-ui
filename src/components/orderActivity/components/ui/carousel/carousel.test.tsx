@@ -61,6 +61,12 @@ beforeEach(() => {
 });
 
 describe("Carousel", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders a region with the carousel roledescription.
+   */
   it("renders a region with the carousel roledescription", () => {
     renderCarousel();
 
@@ -70,12 +76,24 @@ describe("Carousel", () => {
     expect(region).toHaveAttribute("data-slot", "carousel");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * applies the default classes.
+   */
   it("applies the default classes", () => {
     renderCarousel();
 
     expect(screen.getByRole("region")).toHaveClass("relative");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * merges a custom className with the defaults.
+   */
   it("merges a custom className with the defaults", () => {
     renderCarousel({ className: "w-full" });
 
@@ -83,6 +101,12 @@ describe("Carousel", () => {
     expect(screen.getByRole("region")).toHaveClass("relative");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * hands the embla api to setApi.
+   */
   it("hands the embla api to setApi", () => {
     const setApi = jest.fn();
     renderCarousel({ setApi });
@@ -92,6 +116,12 @@ describe("Carousel", () => {
     );
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * subscribes to embla select and reInit events.
+   */
   it("subscribes to embla select and reInit events", () => {
     renderCarousel();
 
@@ -99,6 +129,12 @@ describe("Carousel", () => {
     expect(on).toHaveBeenCalledWith("select", expect.any(Function));
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * unsubscribes from select on unmount.
+   */
   it("unsubscribes from select on unmount", () => {
     const { unmount } = renderCarousel();
 
@@ -107,6 +143,12 @@ describe("Carousel", () => {
     expect(off).toHaveBeenCalledWith("select", expect.any(Function));
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * throws when its parts are used outside a Carousel.
+   */
   it("throws when its parts are used outside a Carousel", () => {
     const spy = jest.spyOn(console, "error").mockImplementation(() => {});
 
@@ -119,6 +161,12 @@ describe("Carousel", () => {
 });
 
 describe("CarouselContent", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * sets the correct data-slot attribute.
+   */
   it("sets the correct data-slot attribute", () => {
     const { container } = renderCarousel();
 
@@ -127,6 +175,12 @@ describe("CarouselContent", () => {
     ).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * clips the viewport and lays the track out horizontally by default.
+   */
   it("clips the viewport and lays the track out horizontally by default", () => {
     const { container } = renderCarousel();
 
@@ -140,6 +194,12 @@ describe("CarouselContent", () => {
     expect(track).toHaveClass("-ml-4");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * lays the track out vertically when asked.
+   */
   it("lays the track out vertically when asked", () => {
     const { container } = renderCarousel({ orientation: "vertical" });
 
@@ -152,6 +212,12 @@ describe("CarouselContent", () => {
 });
 
 describe("CarouselItem", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders each slide as a group with the slide roledescription.
+   */
   it("renders each slide as a group with the slide roledescription", () => {
     renderCarousel();
 
@@ -164,6 +230,12 @@ describe("CarouselItem", () => {
     });
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * renders slide content.
+   */
   it("renders slide content", () => {
     renderCarousel();
 
@@ -171,6 +243,12 @@ describe("CarouselItem", () => {
     expect(screen.getByText("Slide two")).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * applies the horizontal padding by default.
+   */
   it("applies the horizontal padding by default", () => {
     renderCarousel();
 
@@ -178,6 +256,12 @@ describe("CarouselItem", () => {
     expect(screen.getByText("Slide one")).toHaveClass("basis-full");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * applies the vertical padding when the carousel is vertical.
+   */
   it("applies the vertical padding when the carousel is vertical", () => {
     renderCarousel({ orientation: "vertical" });
 
@@ -186,6 +270,12 @@ describe("CarouselItem", () => {
 });
 
 describe("CarouselPrevious and CarouselNext", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * render with screen-reader labels and correct data-slots.
+   */
   it("render with screen-reader labels and correct data-slots", () => {
     renderCarousel();
 
@@ -196,6 +286,12 @@ describe("CarouselPrevious and CarouselNext", () => {
     expect(next).toHaveAttribute("data-slot", "carousel-next");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * use the outline icon button styling.
+   */
   it("use the outline icon button styling", () => {
     renderCarousel();
 
@@ -206,6 +302,12 @@ describe("CarouselPrevious and CarouselNext", () => {
     expect(next).toHaveClass("border");
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * position themselves for a horizontal carousel.
+   */
   it("position themselves for a horizontal carousel", () => {
     renderCarousel();
 
@@ -217,6 +319,12 @@ describe("CarouselPrevious and CarouselNext", () => {
     );
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * position themselves for a vertical carousel.
+   */
   it("position themselves for a vertical carousel", () => {
     renderCarousel({ orientation: "vertical" });
 
@@ -228,6 +336,12 @@ describe("CarouselPrevious and CarouselNext", () => {
     );
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * disable themselves according to the embla api.
+   */
   it("disable themselves according to the embla api", () => {
     renderCarousel();
 
@@ -237,6 +351,12 @@ describe("CarouselPrevious and CarouselNext", () => {
     ).not.toBeDisabled();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * enable previous once embla reports it can scroll back.
+   */
   it("enable previous once embla reports it can scroll back", () => {
     canScrollPrev = true;
     renderCarousel();
@@ -246,6 +366,12 @@ describe("CarouselPrevious and CarouselNext", () => {
     ).not.toBeDisabled();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * call scrollNext when next is clicked.
+   */
   it("call scrollNext when next is clicked", async () => {
     const user = userEvent.setup();
     renderCarousel();
@@ -255,6 +381,12 @@ describe("CarouselPrevious and CarouselNext", () => {
     expect(scrollNext).toHaveBeenCalledTimes(1);
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * call scrollPrev when previous is clicked.
+   */
   it("call scrollPrev when previous is clicked", async () => {
     const user = userEvent.setup();
     canScrollPrev = true;
@@ -269,6 +401,12 @@ describe("CarouselPrevious and CarouselNext", () => {
 // The region carries onKeyDownCapture but no tabIndex, so it cannot take focus.
 // Dispatching straight at it is what actually exercises the handler.
 describe("Carousel keyboard navigation", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * scrolls forward on ArrowRight.
+   */
   it("scrolls forward on ArrowRight", () => {
     renderCarousel();
 
@@ -277,6 +415,12 @@ describe("Carousel keyboard navigation", () => {
     expect(scrollNext).toHaveBeenCalledTimes(1);
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * scrolls back on ArrowLeft.
+   */
   it("scrolls back on ArrowLeft", () => {
     canScrollPrev = true;
     renderCarousel();
@@ -286,6 +430,12 @@ describe("Carousel keyboard navigation", () => {
     expect(scrollPrev).toHaveBeenCalledTimes(1);
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * ignores unrelated keys.
+   */
   it("ignores unrelated keys", () => {
     renderCarousel();
 
@@ -293,5 +443,133 @@ describe("Carousel keyboard navigation", () => {
 
     expect(scrollNext).not.toHaveBeenCalled();
     expect(scrollPrev).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * ============================================================================
+ * Carousel - additional negative scenarios
+ * ============================================================================
+ */
+describe("Carousel negative scenarios", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A disabled previous control must not ask embla to scroll.
+   */
+  it("does not scroll back while previous is disabled", async () => {
+    const user = userEvent.setup();
+
+    canScrollPrev = false;
+
+    renderCarousel();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /previous slide/i,
+      }),
+    );
+
+    expect(scrollPrev).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A disabled next control must not ask embla to scroll.
+   */
+  it("does not scroll forward while next is disabled", async () => {
+    const user = userEvent.setup();
+
+    canScrollNext = false;
+
+    renderCarousel();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /next slide/i,
+      }),
+    );
+
+    expect(scrollNext).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A horizontal carousel must NOT carry the vertical track classes.
+   */
+  it("does not apply the vertical track classes when horizontal", () => {
+    const { container } = renderCarousel();
+
+    const track = container.querySelector(
+      "[data-slot='carousel-content']",
+    )?.firstElementChild;
+
+    expect(track).toHaveClass("-ml-4");
+    expect(track).not.toHaveClass("-mt-4");
+    expect(track).not.toHaveClass("flex-col");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A vertical carousel must NOT carry the horizontal track classes.
+   */
+  it("does not apply the horizontal track classes when vertical", () => {
+    const { container } = renderCarousel({
+      orientation: "vertical",
+    });
+
+    const track = container.querySelector(
+      "[data-slot='carousel-content']",
+    )?.firstElementChild;
+
+    expect(track).toHaveClass("-mt-4");
+    expect(track).not.toHaveClass("-ml-4");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Arrow keys along the unused axis must not move the carousel.
+   */
+  it("does not scroll on the arrow keys of the other axis", () => {
+    const { container } = renderCarousel();
+
+    const region = container.querySelector(
+      "[data-slot='carousel']",
+    ) as HTMLElement;
+
+    fireEvent.keyDown(region, { key: "ArrowUp" });
+    fireEvent.keyDown(region, { key: "ArrowDown" });
+
+    expect(scrollPrev).not.toHaveBeenCalled();
+    expect(scrollNext).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A carousel with no slides must not invent any.
+   */
+  it("does not render slides that were not supplied", () => {
+    const { container } = render(
+      <Carousel>
+        <CarouselContent />
+      </Carousel>,
+    );
+
+    expect(
+      container.querySelector(
+        "[data-slot='carousel-item']",
+      ),
+    ).not.toBeInTheDocument();
   });
 });

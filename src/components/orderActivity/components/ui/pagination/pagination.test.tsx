@@ -1,3 +1,4 @@
+import * as React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -5,8 +6,8 @@ import "@testing-library/jest-dom";
 import {
   Pagination,
   PaginationContent,
-  PaginationLink,
   PaginationItem,
+  PaginationLink,
   PaginationPrevious,
   PaginationNext,
   PaginationEllipsis,
@@ -19,17 +20,21 @@ function renderPagination() {
         <PaginationItem>
           <PaginationPrevious href="#prev" />
         </PaginationItem>
+
         <PaginationItem>
           <PaginationLink href="#1">1</PaginationLink>
         </PaginationItem>
+
         <PaginationItem>
           <PaginationLink href="#2" isActive>
             2
           </PaginationLink>
         </PaginationItem>
+
         <PaginationItem>
           <PaginationEllipsis />
         </PaginationItem>
+
         <PaginationItem>
           <PaginationNext href="#next" />
         </PaginationItem>
@@ -38,188 +43,371 @@ function renderPagination() {
   );
 }
 
+/**
+ * ============================================================================
+ * Pagination
+ * ============================================================================
+ */
 describe("Pagination", () => {
-  it("renders a labelled navigation landmark", () => {
-    renderPagination();
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Every pagination part should render with its own data-slot attribute.
+   */
+  it("sets the correct data-slot attributes for every part", () => {
+    const { container } = renderPagination();
 
-    const nav = screen.getByRole("navigation");
-
-    expect(nav).toHaveAttribute("aria-label", "pagination");
-    expect(nav).toHaveAttribute("data-slot", "pagination");
+    [
+      "pagination",
+      "pagination-content",
+      "pagination-item",
+      "pagination-link",
+      "pagination-ellipsis",
+    ].forEach((slot) => {
+      expect(
+        container.querySelector(
+          `[data-slot='${slot}']`,
+        ),
+      ).toBeInTheDocument();
+    });
   });
 
-  it("applies the default classes", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The pagination should be a labelled navigation landmark.
+   */
+  it("renders as a labelled navigation landmark", () => {
     renderPagination();
 
-    expect(screen.getByRole("navigation")).toHaveClass("mx-auto");
-    expect(screen.getByRole("navigation")).toHaveClass("justify-center");
+    expect(
+      screen.getByRole("navigation", {
+        name: "pagination",
+      }),
+    ).toBeInTheDocument();
   });
 
-  it("merges a custom className with the defaults", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The pages should be rendered as a list of links.
+   */
+  it("renders the pages as a list of links", () => {
+    const { container } = renderPagination();
+
+    expect(
+      (
+        container.querySelector(
+          "[data-slot='pagination-content']",
+        ) as HTMLElement
+      ).tagName,
+    ).toBe("UL");
+
+    expect(
+      screen.getByRole("link", { name: "1" }),
+    ).toHaveAttribute("href", "#1");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The active page should be marked with aria-current.
+   */
+  it("marks the active page", () => {
+    renderPagination();
+
+    const active = screen.getByRole("link", {
+      name: "2",
+    });
+
+    expect(active).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+
+    expect(active).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The active page should use the outline styling so it stands out.
+   */
+  it("styles the active page differently", () => {
+    renderPagination();
+
+    const active = screen.getByRole("link", {
+      name: "2",
+    });
+
+    const inactive = screen.getByRole("link", {
+      name: "1",
+    });
+
+    expect(active).toHaveClass("border");
+    expect(active.className).not.toBe(
+      inactive.className,
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The previous and next controls should be labelled for screen readers.
+   */
+  it("labels the previous and next controls", () => {
+    renderPagination();
+
+    expect(
+      screen.getByRole("link", {
+        name: "Go to previous page",
+      }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("link", {
+        name: "Go to next page",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The ellipsis should carry a screen reader label.
+   */
+  it("gives the ellipsis a screen reader label", () => {
+    const { container } = renderPagination();
+
+    expect(
+      container.querySelector(
+        "[data-slot='pagination-ellipsis']",
+      ),
+    ).toHaveTextContent("More pages");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A page link should be clickable.
+   */
+  it("calls the handler when a page is clicked", async () => {
+    const user = userEvent.setup();
+    const onClick = jest.fn((event: React.MouseEvent) =>
+      event.preventDefault(),
+    );
+
     render(
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationLink href="#3" onClick={onClick}>
+              3
+            </PaginationLink>
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>,
+    );
+
+    await user.click(
+      screen.getByRole("link", { name: "3" }),
+    );
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A custom className should be merged with the defaults.
+   */
+  it("merges a custom className with the defaults", () => {
+    const { container } = render(
       <Pagination className="mt-8">
+        <PaginationContent className="gap-4">
+          <PaginationItem>
+            <PaginationLink
+              href="#1"
+              className="font-bold"
+            >
+              1
+            </PaginationLink>
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>,
+    );
+
+    expect(
+      container.querySelector(
+        "[data-slot='pagination']",
+      ),
+    ).toHaveClass("mt-8", "mx-auto");
+
+    expect(
+      container.querySelector(
+        "[data-slot='pagination-content']",
+      ),
+    ).toHaveClass("gap-4", "flex");
+
+    expect(
+      screen.getByRole("link", { name: "1" }),
+    ).toHaveClass("font-bold");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Inactive pages must NOT be marked as the current page.
+   */
+  it("does not mark inactive pages as current", () => {
+    renderPagination();
+
+    const inactive = screen.getByRole("link", {
+      name: "1",
+    });
+
+    expect(inactive).not.toHaveAttribute(
+      "aria-current",
+    );
+
+    expect(inactive).not.toHaveAttribute(
+      "data-active",
+      "true",
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Only one page may be current at a time.
+   */
+  it("does not mark more than one page as current", () => {
+    const { container } = renderPagination();
+
+    expect(
+      container.querySelectorAll(
+        "[aria-current='page']",
+      ),
+    ).toHaveLength(1);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The ellipsis is decoration - it must NOT be announced as its own
+   * element or be reachable.
+   */
+  it("does not expose the ellipsis to assistive technology", () => {
+    const { container } = renderPagination();
+
+    const ellipsis = container.querySelector(
+      "[data-slot='pagination-ellipsis']",
+    ) as HTMLElement;
+
+    expect(ellipsis).toHaveAttribute("aria-hidden");
+    expect(ellipsis.tagName).toBe("SPAN");
+    expect(ellipsis).not.toHaveAttribute("href");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The previous and next controls must not expose their visible text
+   * twice - the visible label is hidden on small screens and the
+   * accessible name comes from aria-label.
+   */
+  it("does not duplicate the accessible name of the next control", () => {
+    renderPagination();
+
+    expect(
+      screen.queryByRole("link", { name: "Next" }),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.getByRole("link", {
+        name: "Go to next page",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A pagination link is an anchor - it must not render as a button
+   * element, which would break middle-click and open-in-new-tab.
+   */
+  it("does not render page links as buttons", () => {
+    renderPagination();
+
+    expect(
+      screen.queryAllByRole("button"),
+    ).toHaveLength(0);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * An empty pagination must not invent page entries.
+   */
+  it("does not render entries that were not supplied", () => {
+    const { container } = render(
+      <Pagination>
         <PaginationContent />
       </Pagination>,
     );
 
-    expect(screen.getByRole("navigation")).toHaveClass("mt-8");
-    expect(screen.getByRole("navigation")).toHaveClass("mx-auto");
-  });
-});
-
-describe("PaginationContent and PaginationItem", () => {
-  it("render a list of items", () => {
-    renderPagination();
-
-    expect(screen.getByRole("list")).toHaveAttribute(
-      "data-slot",
-      "pagination-content",
-    );
-    expect(screen.getAllByRole("listitem")).toHaveLength(5);
-  });
-
-  it("applies the default content classes", () => {
-    renderPagination();
-
-    expect(screen.getByRole("list")).toHaveClass("flex");
-    expect(screen.getByRole("list")).toHaveClass("items-center");
-  });
-
-  it("sets the correct data-slot on each item", () => {
-    renderPagination();
-
-    screen.getAllByRole("listitem").forEach((item) => {
-      expect(item).toHaveAttribute("data-slot", "pagination-item");
-    });
-  });
-});
-
-describe("PaginationLink", () => {
-  it("renders an anchor with the correct data-slot", () => {
-    render(<PaginationLink href="#1">1</PaginationLink>);
-
-    const link = screen.getByRole("link", { name: "1" });
-
-    expect(link).toHaveAttribute("href", "#1");
-    expect(link).toHaveAttribute("data-slot", "pagination-link");
-  });
-
-  it("uses the ghost button variant when inactive", () => {
-    render(<PaginationLink href="#1">1</PaginationLink>);
-
-    const link = screen.getByRole("link", { name: "1" });
-
-    // isActive is undefined here, so React omits data-active entirely.
-    expect(link).not.toHaveAttribute("data-active");
-    expect(link).not.toHaveAttribute("aria-current");
-    expect(link).toHaveClass("hover:bg-accent");
-  });
-
-  it("uses the outline button variant and marks the current page when active", () => {
-    render(
-      <PaginationLink href="#2" isActive>
-        2
-      </PaginationLink>,
-    );
-
-    const link = screen.getByRole("link", { name: "2" });
-
-    expect(link).toHaveAttribute("aria-current", "page");
-    expect(link).toHaveAttribute("data-active", "true");
-    expect(link).toHaveClass("border");
-  });
-
-  it("defaults to the icon size", () => {
-    render(<PaginationLink href="#1">1</PaginationLink>);
-
-    expect(screen.getByRole("link", { name: "1" })).toHaveClass("size-9");
-  });
-
-  it("honours an explicit size", () => {
-    render(
-      <PaginationLink href="#1" size="lg">
-        1
-      </PaginationLink>,
-    );
-
-    expect(screen.getByRole("link", { name: "1" })).toHaveClass("h-10");
-  });
-
-  it("calls onClick when clicked", async () => {
-    const user = userEvent.setup();
-    const onClick = jest.fn();
-    render(
-      <PaginationLink href="#1" onClick={onClick}>
-        1
-      </PaginationLink>,
-    );
-
-    await user.click(screen.getByRole("link", { name: "1" }));
-
-    expect(onClick).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("PaginationPrevious and PaginationNext", () => {
-  it("carry descriptive aria-labels", () => {
-    renderPagination();
+    expect(
+      container.querySelector(
+        "[data-slot='pagination-item']",
+      ),
+    ).not.toBeInTheDocument();
 
     expect(
-      screen.getByRole("link", { name: "Go to previous page" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Go to next page" }),
-    ).toBeInTheDocument();
+      screen.queryAllByRole("link"),
+    ).toHaveLength(0);
   });
 
-  it("render their label text and a chevron", () => {
-    renderPagination();
-
-    const previous = screen.getByRole("link", { name: "Go to previous page" });
-
-    expect(previous).toHaveTextContent("Previous");
-    expect(previous.querySelector("svg")).toBeInTheDocument();
-  });
-
-  it("use the default button size rather than icon", () => {
-    renderPagination();
-
-    expect(
-      screen.getByRole("link", { name: "Go to previous page" }),
-    ).toHaveClass("h-9");
-  });
-
-  it("merge a custom className with the defaults", () => {
-    render(<PaginationNext href="#next" className="ml-4" />);
-
-    const next = screen.getByRole("link", { name: "Go to next page" });
-
-    expect(next).toHaveClass("ml-4");
-    expect(next).toHaveClass("gap-1");
-  });
-});
-
-describe("PaginationEllipsis", () => {
-  it("is hidden from assistive tech but carries screen-reader text", () => {
-    const { container } = render(<PaginationEllipsis />);
-
-    const ellipsis = container.querySelector(
-      "[data-slot='pagination-ellipsis']",
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A custom className must not remove the pagination layout.
+   */
+  it("does not drop the default classes when a custom className is given", () => {
+    const { container } = render(
+      <Pagination className="mt-8">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationLink href="#1">1</PaginationLink>
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>,
     );
 
-    expect(ellipsis).toHaveAttribute("aria-hidden");
-    expect(ellipsis).toHaveTextContent("More pages");
-    expect(ellipsis?.querySelector("svg")).toBeInTheDocument();
-  });
-
-  it("merges a custom className with the defaults", () => {
-    const { container } = render(<PaginationEllipsis className="size-12" />);
-
-    const ellipsis = container.querySelector(
-      "[data-slot='pagination-ellipsis']",
+    const nav = container.querySelector(
+      "[data-slot='pagination']",
     );
 
-    expect(ellipsis).toHaveClass("size-12");
-    expect(ellipsis).toHaveClass("items-center");
+    expect(nav).toHaveClass("mt-8");
+    expect(nav).toHaveClass("flex");
+    expect(nav).toHaveClass("justify-center");
   });
 });

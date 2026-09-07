@@ -33,7 +33,17 @@ type MultipleAccordionOverrides = {
   id?: string;
   value?: string[];
   defaultValue?: string[];
+  disabled?: boolean;
   onValueChange?: (value: string[]) => void;
+};
+
+type SingleAccordionOverrides = {
+  id?: string;
+  value?: string;
+  defaultValue?: string;
+  collapsible?: boolean;
+  disabled?: boolean;
+  onValueChange?: (value: string) => void;
 };
 
 function renderAccordion(
@@ -1321,5 +1331,601 @@ describe("Accordion interactions - Multiple", () => {
         "Shipment details panel",
       ),
     ).toBeInTheDocument();
+  });
+});
+/**
+ * Renders a single-type accordion.
+ *
+ * type="single" only allows one open item at a time, and it uses
+ * string (not string[]) values.
+ */
+function renderSingleAccordion(
+  props: SingleAccordionOverrides = {},
+) {
+  return render(
+    <Accordion type="single" {...props}>
+      <AccordionItem value="item-1">
+        <AccordionTrigger>Order details</AccordionTrigger>
+        <AccordionContent>
+          Order details panel
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="item-2">
+        <AccordionTrigger>Shipment details</AccordionTrigger>
+        <AccordionContent>
+          Shipment details panel
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>,
+  );
+}
+
+/**
+ * ============================================================================
+ * Accordion interactions - Single
+ * ============================================================================
+ */
+describe("Accordion interactions - Single", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A single accordion should open the clicked item.
+   */
+  it("opens the clicked item", async () => {
+    const user = userEvent.setup();
+
+    renderSingleAccordion();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /order details/i,
+      }),
+    );
+
+    expect(
+      screen.getByText(
+        "Order details panel",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A single accordion must NOT keep the previous item open when a new
+   * item is opened.
+   */
+  it("does not keep the previous item open when another item is opened", async () => {
+    const user = userEvent.setup();
+
+    renderSingleAccordion({
+      defaultValue: "item-1",
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /shipment details/i,
+      }),
+    );
+
+    expect(
+      screen.queryByText(
+        "Order details panel",
+      ),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.getByText(
+        "Shipment details panel",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Without the collapsible prop, clicking an already open trigger must
+   * NOT close it.
+   */
+  it("does not close the open item when collapsible is not enabled", async () => {
+    const user = userEvent.setup();
+
+    renderSingleAccordion({
+      defaultValue: "item-1",
+    });
+
+    const orderTrigger =
+      screen.getByRole("button", {
+        name: /order details/i,
+      });
+
+    await user.click(orderTrigger);
+
+    expect(orderTrigger).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    expect(
+      screen.getByText(
+        "Order details panel",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * With collapsible enabled, clicking the open trigger closes it.
+   */
+  it("closes the open item when collapsible is enabled", async () => {
+    const user = userEvent.setup();
+
+    renderSingleAccordion({
+      defaultValue: "item-1",
+      collapsible: true,
+    });
+
+    const orderTrigger =
+      screen.getByRole("button", {
+        name: /order details/i,
+      });
+
+    await user.click(orderTrigger);
+
+    expect(orderTrigger).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+
+    expect(
+      screen.queryByText(
+        "Order details panel",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * onValueChange for a single accordion must emit a plain string,
+   * never an array.
+   */
+  it("does not emit an array from onValueChange", async () => {
+    const user = userEvent.setup();
+    const onValueChange = jest.fn();
+
+    renderSingleAccordion({ onValueChange });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /order details/i,
+      }),
+    );
+
+    expect(onValueChange).toHaveBeenCalledWith(
+      "item-1",
+    );
+
+    expect(
+      Array.isArray(
+        onValueChange.mock.calls[0][0],
+      ),
+    ).toBe(false);
+  });
+});
+
+/**
+ * ============================================================================
+ * Accordion - additional negative scenarios
+ * ============================================================================
+ */
+describe("Accordion negative scenarios", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * No panel content should exist before the user interacts.
+   */
+  it("does not render any panel content before interaction", () => {
+    renderAccordion();
+
+    expect(
+      screen.queryByText(
+        "Order details panel",
+      ),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByText(
+        "Shipment details panel",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Content must be removed from the DOM again once the item is closed,
+   * not simply hidden with CSS.
+   */
+  it("removes the content from the DOM after the item is closed", async () => {
+    const user = userEvent.setup();
+
+    renderAccordion();
+
+    const orderTrigger =
+      screen.getByRole("button", {
+        name: /order details/i,
+      });
+
+    await user.click(orderTrigger);
+
+    expect(
+      screen.getByText(
+        "Order details panel",
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(orderTrigger);
+
+    expect(
+      screen.queryByText(
+        "Order details panel",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A collapsed accordion must not expose a content region to
+   * assistive technology.
+   *
+   * Radix keeps the content root mounted so it can animate, but it must
+   * stay hidden and must not render its children.
+   */
+  it("does not expose a content region while every item is collapsed", () => {
+    const { container } = renderAccordion();
+
+    expect(
+      screen.queryByRole("region"),
+    ).not.toBeInTheDocument();
+
+    const contents = Array.from(
+      container.querySelectorAll(
+        "[data-slot='accordion-content']",
+      ),
+    );
+
+    expect(contents).toHaveLength(2);
+
+    contents.forEach((content) => {
+      expect(content).toHaveAttribute("hidden");
+
+      expect(content).toHaveAttribute(
+        "data-state",
+        "closed",
+      );
+
+      expect(content).toBeEmptyDOMElement();
+    });
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * onValueChange must not fire during the initial render - only in
+   * response to a real user interaction.
+   */
+  it("does not call onValueChange on initial render", () => {
+    const onValueChange = jest.fn();
+
+    renderAccordion({
+      defaultValue: ["item-1"],
+      onValueChange,
+    });
+
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Keys that are not activation keys must not toggle the item.
+   */
+  it("does not toggle the item when a non-activation key is pressed", async () => {
+    const user = userEvent.setup();
+
+    renderAccordion();
+
+    const orderTrigger =
+      screen.getByRole("button", {
+        name: /order details/i,
+      });
+
+    orderTrigger.focus();
+
+    await user.keyboard("{ArrowRight}");
+    await user.keyboard("a");
+    await user.keyboard("{Escape}");
+
+    expect(orderTrigger).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+
+    expect(
+      screen.queryByText(
+        "Order details panel",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Disabling the accordion root must disable every item, so no item
+   * can be opened.
+   */
+  it("does not open any item when the accordion root is disabled", async () => {
+    const user = userEvent.setup();
+    const onValueChange = jest.fn();
+
+    renderAccordion({
+      disabled: true,
+      onValueChange,
+    });
+
+    const orderTrigger =
+      screen.getByRole("button", {
+        name: /order details/i,
+      });
+
+    expect(orderTrigger).toBeDisabled();
+
+    await user.click(orderTrigger);
+
+    expect(orderTrigger).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Keyboard navigation must skip a disabled trigger instead of
+   * parking focus on it.
+   */
+  it("does not move focus onto a disabled trigger with ArrowDown", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <Accordion type="multiple">
+        <AccordionItem value="item-1">
+          <AccordionTrigger>Order details</AccordionTrigger>
+          <AccordionContent>
+            Order details panel
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="item-2" disabled>
+          <AccordionTrigger>Shipment details</AccordionTrigger>
+          <AccordionContent>
+            Shipment details panel
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="item-3">
+          <AccordionTrigger>Invoice details</AccordionTrigger>
+          <AccordionContent>
+            Invoice details panel
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>,
+    );
+
+    const orderTrigger =
+      screen.getByRole("button", {
+        name: /order details/i,
+      });
+
+    const shipmentTrigger =
+      screen.getByRole("button", {
+        name: /shipment details/i,
+      });
+
+    const invoiceTrigger =
+      screen.getByRole("button", {
+        name: /invoice details/i,
+      });
+
+    orderTrigger.focus();
+
+    await user.keyboard("{ArrowDown}");
+
+    expect(shipmentTrigger).not.toHaveFocus();
+    expect(invoiceTrigger).toHaveFocus();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Clicking inside the open panel must not collapse the item.
+   */
+  it("does not close the item when its content is clicked", async () => {
+    const user = userEvent.setup();
+
+    renderAccordion({
+      defaultValue: ["item-1"],
+    });
+
+    await user.click(
+      screen.getByText(
+        "Order details panel",
+      ),
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: /order details/i,
+      }),
+    ).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    expect(
+      screen.getByText(
+        "Order details panel",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A controlled accordion without an onValueChange handler must not
+   * change state by itself.
+   */
+  it("does not open a controlled accordion that has no change handler", async () => {
+    const user = userEvent.setup();
+
+    renderAccordion({ value: [] });
+
+    const orderTrigger =
+      screen.getByRole("button", {
+        name: /order details/i,
+      });
+
+    await user.click(orderTrigger);
+
+    expect(orderTrigger).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+
+    expect(
+      screen.queryByText(
+        "Order details panel",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Only the values listed in a controlled value array may render
+   * their content.
+   */
+  it("does not render content for items outside the controlled value", () => {
+    renderAccordion({ value: ["item-1"] });
+
+    expect(
+      screen.getByText(
+        "Order details panel",
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByText(
+        "Shipment details panel",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The accordion root is only a container - it must not be an
+   * interactive, expandable element itself.
+   */
+  it("does not turn the accordion root into an interactive element", () => {
+    const { container } = renderAccordion();
+
+    const root = container.querySelector(
+      "[data-slot='accordion']",
+    ) as HTMLElement;
+
+    expect(root.tagName).not.toBe("BUTTON");
+    expect(root).not.toHaveAttribute("aria-expanded");
+    expect(root).not.toHaveAttribute("disabled");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The chevron icon must never be a click target of its own, otherwise
+   * it would swallow the trigger's click.
+   */
+  it("does not make the chevron icon clickable", () => {
+    const { container } = renderAccordion();
+
+    const chevron = container.querySelector(
+      "[data-slot='accordion-trigger'] svg",
+    ) as SVGElement;
+
+    expect(chevron).toBeInTheDocument();
+
+    expect(chevron.getAttribute("class")).toContain(
+      "pointer-events-none",
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * An item that has a trigger but no content must not crash and must
+   * not render a content wrapper.
+   */
+  it("does not break when an item has no content", async () => {
+    const user = userEvent.setup();
+
+    const { container } = render(
+      <Accordion type="multiple">
+        <AccordionItem value="item-1">
+          <AccordionTrigger>Order details</AccordionTrigger>
+        </AccordionItem>
+      </Accordion>,
+    );
+
+    const orderTrigger =
+      screen.getByRole("button", {
+        name: /order details/i,
+      });
+
+    await user.click(orderTrigger);
+
+    expect(orderTrigger).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    expect(
+      container.querySelector(
+        "[data-slot='accordion-content']",
+      ),
+    ).not.toBeInTheDocument();
   });
 });

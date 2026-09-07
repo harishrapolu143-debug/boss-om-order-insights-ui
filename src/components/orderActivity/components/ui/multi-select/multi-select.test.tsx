@@ -1,3 +1,4 @@
+import * as React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -5,20 +6,22 @@ import "@testing-library/jest-dom";
 import { MultiSelect } from "./multi-select";
 
 const OPTIONS = [
-  { value: "active", label: "Active" },
-  { value: "pending", label: "Pending" },
-  { value: "closed", label: "Closed" },
+  { value: "open", label: "Open" },
+  { value: "shipped", label: "Shipped" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
 function renderMultiSelect(
-  props: Partial<React.ComponentProps<typeof MultiSelect>> = {},
+  props: Partial<
+    React.ComponentProps<typeof MultiSelect>
+  > = {},
 ) {
   const onChange = props.onChange ?? jest.fn();
 
   const utils = render(
     <MultiSelect
       options={OPTIONS}
-      selected={[]}
+      selected={props.selected ?? []}
       onChange={onChange}
       {...props}
     />,
@@ -27,191 +30,374 @@ function renderMultiSelect(
   return { ...utils, onChange };
 }
 
-describe("MultiSelect trigger", () => {
-  it("renders a combobox button", () => {
+const getTrigger = () =>
+  screen.getByRole("combobox");
+
+/**
+ * ============================================================================
+ * MultiSelect
+ * ============================================================================
+ */
+describe("MultiSelect", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The trigger should be exposed as a combobox.
+   */
+  it("renders the trigger as a combobox", () => {
     renderMultiSelect();
 
-    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(getTrigger()).toBeInTheDocument();
   });
 
-  it("shows the default placeholder when nothing is selected", () => {
-    renderMultiSelect();
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The placeholder should be shown while nothing is selected.
+   */
+  it("shows the placeholder while nothing is selected", () => {
+    renderMultiSelect({
+      placeholder: "Select statuses",
+    });
 
-    expect(screen.getByText("Select items")).toBeInTheDocument();
+    expect(
+      screen.getByText("Select statuses"),
+    ).toBeInTheDocument();
   });
 
-  it("shows a custom placeholder", () => {
-    renderMultiSelect({ placeholder: "Pick statuses" });
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Selected labels should be listed on the trigger.
+   */
+  it("lists the selected labels on the trigger", () => {
+    renderMultiSelect({
+      selected: ["open", "shipped"],
+    });
 
-    expect(screen.getByText("Pick statuses")).toBeInTheDocument();
-  });
-
-  it("lists the selected labels instead of the placeholder", () => {
-    renderMultiSelect({ selected: ["active", "pending"] });
-
-    expect(screen.queryByText("Select items")).not.toBeInTheDocument();
-    expect(screen.getByRole("combobox")).toHaveTextContent("Active");
-    expect(screen.getByRole("combobox")).toHaveTextContent("Pending");
-  });
-
-  it("separates multiple selected labels with a comma", () => {
-    renderMultiSelect({ selected: ["active", "pending"] });
-
-    // The last label has no trailing comma.
-    expect(screen.getByRole("combobox")).toHaveTextContent("Active,Pending");
-  });
-
-  it("reports the collapsed state via aria-expanded", () => {
-    renderMultiSelect();
-
-    expect(screen.getByRole("combobox")).toHaveAttribute(
-      "aria-expanded",
-      "false",
+    expect(getTrigger()).toHaveTextContent("Open");
+    expect(getTrigger()).toHaveTextContent(
+      "Shipped",
     );
   });
 
-  it("merges a custom className onto the trigger", () => {
-    renderMultiSelect({ className: "w-64" });
-
-    expect(screen.getByRole("combobox")).toHaveClass("w-64");
-  });
-
-  it("renders a chevron icon", () => {
-    renderMultiSelect();
-
-    expect(screen.getByRole("combobox").querySelector("svg")).toBeInTheDocument();
-  });
-
-  it("is disabled when asked", () => {
-    renderMultiSelect({ disabled: true });
-
-    expect(screen.getByRole("combobox")).toBeDisabled();
-  });
-
-  it("renders an option icon when one is supplied", () => {
-    renderMultiSelect({
-      options: [
-        { value: "active", label: "Active", icon: <span>ICON</span> },
-      ],
-      selected: ["active"],
-    });
-
-    expect(screen.getByText("ICON")).toBeInTheDocument();
-  });
-});
-
-describe("MultiSelect popover", () => {
-  it("is closed initially", () => {
-    renderMultiSelect();
-
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
-  });
-
-  it("opens when the trigger is clicked", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Clicking the trigger should open the option list.
+   */
+  it("opens the option list when clicked", async () => {
     const user = userEvent.setup();
+
     renderMultiSelect();
 
-    await user.click(screen.getByRole("combobox"));
+    await user.click(getTrigger());
 
-    expect(await screen.findAllByRole("checkbox")).toHaveLength(3);
-    expect(screen.getByRole("combobox")).toHaveAttribute(
+    expect(
+      screen.getAllByRole("checkbox"),
+    ).toHaveLength(3);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The trigger should report the open state.
+   */
+  it("reports the open state on the trigger", async () => {
+    const user = userEvent.setup();
+
+    renderMultiSelect();
+
+    expect(getTrigger()).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+
+    await user.click(getTrigger());
+
+    expect(getTrigger()).toHaveAttribute(
       "aria-expanded",
       "true",
     );
   });
 
-  it("renders a labelled row per option", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Selected options should be shown ticked in the list.
+   */
+  it("ticks the selected options in the list", async () => {
     const user = userEvent.setup();
-    renderMultiSelect();
 
-    await user.click(screen.getByRole("combobox"));
+    renderMultiSelect({ selected: ["shipped"] });
 
-    for (const option of OPTIONS) {
-      expect(
-        await screen.findByLabelText(option.label),
-      ).toBeInTheDocument();
-    }
+    await user.click(getTrigger());
+
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Shipped",
+      }),
+    ).toBeChecked();
   });
 
-  it("checks the boxes for already-selected values", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Choosing an option should report its value.
+   */
+  it("reports the chosen value", async () => {
     const user = userEvent.setup();
-    renderMultiSelect({ selected: ["pending"] });
 
-    await user.click(screen.getByRole("combobox"));
+    const { onChange } = renderMultiSelect();
 
-    expect(await screen.findByLabelText("Pending")).toBeChecked();
-    expect(screen.getByLabelText("Active")).not.toBeChecked();
-  });
+    await user.click(getTrigger());
 
-  it("does not open while disabled", async () => {
-    const user = userEvent.setup();
-    renderMultiSelect({ disabled: true });
-
-    await user.click(screen.getByRole("combobox"));
-
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
-  });
-});
-
-describe("MultiSelect selection", () => {
-  it("calls onChange with the value when a checkbox is clicked", async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    renderMultiSelect({ onChange });
-
-    await user.click(screen.getByRole("combobox"));
-    await user.click(await screen.findByLabelText("Pending"));
-
-    expect(onChange).toHaveBeenCalledWith("pending");
-  });
-
-  it("calls onChange when an already-selected value is clicked again", async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    renderMultiSelect({ selected: ["pending"], onChange });
-
-    await user.click(screen.getByRole("combobox"));
-    await user.click(await screen.findByLabelText("Pending"));
-
-    // Toggling off is the parent's job - the component always reports the value.
-    expect(onChange).toHaveBeenCalledWith("pending");
-  });
-
-  it("is fully controlled - selection does not change without the parent", async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    renderMultiSelect({ onChange });
-
-    await user.click(screen.getByRole("combobox"));
-    await user.click(await screen.findByLabelText("Pending"));
-
-    expect(screen.getByLabelText("Pending")).not.toBeChecked();
-  });
-
-  it("reflects a selection pushed in by the parent", async () => {
-    const user = userEvent.setup();
-    const { rerender } = renderMultiSelect();
-
-    await user.click(screen.getByRole("combobox"));
-    await screen.findByLabelText("Pending");
-
-    rerender(
-      <MultiSelect
-        options={OPTIONS}
-        selected={["pending"]}
-        onChange={jest.fn()}
-      />,
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Shipped",
+      }),
     );
 
-    expect(screen.getByLabelText("Pending")).toBeChecked();
+    expect(onChange).toHaveBeenCalledWith(
+      "shipped",
+    );
   });
 
-  it("renders nothing to pick when the option list is empty", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Clicking the label should also report the value.
+   */
+  it("reports the value when the label is clicked", async () => {
     const user = userEvent.setup();
+
+    const { onChange } = renderMultiSelect();
+
+    await user.click(getTrigger());
+
+    await user.click(screen.getByText("Open"));
+
+    expect(onChange).toHaveBeenCalledWith("open");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * An option icon should be rendered alongside its label.
+   */
+  it("renders an option icon when one is supplied", async () => {
+    const user = userEvent.setup();
+
+    renderMultiSelect({
+      options: [
+        {
+          value: "open",
+          label: "Open",
+          icon: <svg data-testid="open-icon" />,
+        },
+      ],
+    });
+
+    await user.click(getTrigger());
+
+    expect(
+      screen.getAllByTestId("open-icon").length,
+    ).toBeGreaterThan(0);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A custom className should reach the trigger.
+   */
+  it("applies a custom className to the trigger", () => {
+    renderMultiSelect({ className: "w-64" });
+
+    expect(getTrigger()).toHaveClass("w-64");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The option list must NOT be in the DOM until it is opened.
+   */
+  it("does not render the option list while closed", () => {
+    renderMultiSelect();
+
+    expect(
+      screen.queryByRole("checkbox"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The placeholder must NOT be shown once something is selected.
+   */
+  it("does not show the placeholder once something is selected", () => {
+    renderMultiSelect({
+      selected: ["open"],
+      placeholder: "Select statuses",
+    });
+
+    expect(
+      screen.queryByText("Select statuses"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Unselected options must NOT be ticked.
+   */
+  it("does not tick unselected options", async () => {
+    const user = userEvent.setup();
+
+    renderMultiSelect({ selected: ["shipped"] });
+
+    await user.click(getTrigger());
+
+    expect(
+      screen.getByRole("checkbox", { name: "Open" }),
+    ).not.toBeChecked();
+
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Cancelled",
+      }),
+    ).not.toBeChecked();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A disabled control must not open.
+   */
+  it("does not open while disabled", async () => {
+    const user = userEvent.setup();
+
+    renderMultiSelect({ disabled: true });
+
+    await user.click(getTrigger());
+
+    expect(
+      screen.queryByRole("checkbox"),
+    ).not.toBeInTheDocument();
+
+    expect(getTrigger()).toBeDisabled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The component is controlled - it must NOT change the selection by
+   * itself, only report the toggled value to its owner.
+   */
+  it("does not change its own selection", async () => {
+    const user = userEvent.setup();
+
+    renderMultiSelect({ selected: [] });
+
+    await user.click(getTrigger());
+
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Shipped",
+      }),
+    );
+
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Shipped",
+      }),
+    ).not.toBeChecked();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * Clicking one option must NOT report any other value.
+   */
+  it("does not report more than the clicked value", async () => {
+    const user = userEvent.setup();
+
+    const { onChange } = renderMultiSelect();
+
+    await user.click(getTrigger());
+
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Shipped",
+      }),
+    );
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+
+    expect(onChange).not.toHaveBeenCalledWith(
+      "open",
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A selected value with no matching option must not put a blank entry
+   * on the trigger.
+   */
+  it("does not render an entry for an unknown selected value", () => {
+    renderMultiSelect({ selected: ["returned"] });
+
+    expect(getTrigger()).not.toHaveTextContent(
+      "returned",
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * An empty option list must not invent entries.
+   */
+  it("does not render entries for an empty option list", async () => {
+    const user = userEvent.setup();
+
     renderMultiSelect({ options: [] });
 
-    await user.click(screen.getByRole("combobox"));
+    await user.click(getTrigger());
 
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * onChange must not fire on the initial render.
+   */
+  it("does not call onChange on initial render", () => {
+    const { onChange } = renderMultiSelect({
+      selected: ["open"],
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

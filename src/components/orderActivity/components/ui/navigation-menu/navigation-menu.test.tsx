@@ -1,3 +1,4 @@
+import * as React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -6,335 +7,360 @@ import {
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,
-  NavigationMenuContent,
   NavigationMenuTrigger,
+  NavigationMenuContent,
   NavigationMenuLink,
-  NavigationMenuViewport,
   navigationMenuTriggerStyle,
 } from "./navigation-menu";
 
-function renderNavigationMenu(props: { viewport?: boolean } = {}) {
+type NavMenuOverrides = {
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+  viewport?: boolean;
+};
+
+function renderNavigationMenu(
+  props: NavMenuOverrides = {},
+) {
   return render(
     <NavigationMenu {...props}>
       <NavigationMenuList>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger>Orders</NavigationMenuTrigger>
+        <NavigationMenuItem value="orders">
+          <NavigationMenuTrigger>
+            Orders
+          </NavigationMenuTrigger>
+
           <NavigationMenuContent>
-            <NavigationMenuLink href="/orders/active">
-              Active orders
+            <NavigationMenuLink href="/orders/open">
+              Open orders
             </NavigationMenuLink>
           </NavigationMenuContent>
         </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuLink href="/reports">Reports</NavigationMenuLink>
+
+        <NavigationMenuItem value="reports">
+          <NavigationMenuLink href="/reports">
+            Reports
+          </NavigationMenuLink>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>,
   );
 }
 
+/**
+ * ============================================================================
+ * NavigationMenu
+ * ============================================================================
+ */
 describe("NavigationMenu", () => {
-  it("renders with the navigation role and correct data-slot", () => {
-    renderNavigationMenu();
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Every navigation menu part should render with its own data-slot
+   * attribute.
+   */
+  it("sets the correct data-slot attributes", () => {
+    const { container } = renderNavigationMenu({
+      defaultValue: "orders",
+    });
 
-    const nav = screen.getByRole("navigation");
-
-    expect(nav).toBeInTheDocument();
-    expect(nav).toHaveAttribute("data-slot", "navigation-menu");
-  });
-
-  it("applies the default classes", () => {
-    renderNavigationMenu();
-
-    const nav = screen.getByRole("navigation");
-
-    expect(nav).toHaveClass("relative");
-    expect(nav).toHaveClass("flex");
-    expect(nav).toHaveClass("max-w-max");
-  });
-
-  it("records the viewport flag, on by default", () => {
-    renderNavigationMenu();
-
-    expect(screen.getByRole("navigation")).toHaveAttribute(
-      "data-viewport",
-      "true",
-    );
-  });
-
-  it("mounts the viewport once a menu opens", async () => {
-    const user = userEvent.setup();
-    const { container } = renderNavigationMenu();
-
-    // Radix only mounts the viewport while a menu is open.
-    expect(
-      container.querySelector("[data-slot='navigation-menu-viewport']"),
-    ).toBeNull();
-
-    await user.click(screen.getByRole("button", { name: /Orders/ }));
-    await screen.findByText("Active orders");
-
-    expect(
-      container.querySelector("[data-slot='navigation-menu-viewport']"),
-    ).toBeInTheDocument();
-  });
-
-  it("never mounts a viewport when disabled", async () => {
-    const user = userEvent.setup();
-    const { container } = renderNavigationMenu({ viewport: false });
-
-    expect(screen.getByRole("navigation")).toHaveAttribute(
-      "data-viewport",
-      "false",
-    );
-
-    await user.click(screen.getByRole("button", { name: /Orders/ }));
-    await screen.findByText("Active orders");
-
-    expect(
-      container.querySelector("[data-slot='navigation-menu-viewport']"),
-    ).toBeNull();
-  });
-
-  it("merges a custom className with the defaults", () => {
-    render(
-      <NavigationMenu className="w-full">
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuLink href="/reports">Reports</NavigationMenuLink>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>,
-    );
-
-    expect(screen.getByRole("navigation")).toHaveClass("w-full");
-    expect(screen.getByRole("navigation")).toHaveClass("relative");
-  });
-});
-
-describe("NavigationMenuList and NavigationMenuItem", () => {
-  it("render a list of items", () => {
-    renderNavigationMenu();
-
-    expect(screen.getByRole("list")).toHaveAttribute(
-      "data-slot",
+    [
+      "navigation-menu",
       "navigation-menu-list",
-    );
-    expect(screen.getAllByRole("listitem")).toHaveLength(2);
-  });
-
-  it("apply their default classes", () => {
-    renderNavigationMenu();
-
-    expect(screen.getByRole("list")).toHaveClass("flex");
-    expect(screen.getByRole("list")).toHaveClass("list-none");
-    expect(screen.getAllByRole("listitem")[0]).toHaveClass("relative");
-  });
-
-  it("set the correct data-slot on each item", () => {
-    renderNavigationMenu();
-
-    screen.getAllByRole("listitem").forEach((item) => {
-      expect(item).toHaveAttribute("data-slot", "navigation-menu-item");
+      "navigation-menu-item",
+      "navigation-menu-trigger",
+      "navigation-menu-content",
+      "navigation-menu-link",
+      "navigation-menu-viewport",
+    ].forEach((slot) => {
+      expect(
+        container.querySelector(
+          `[data-slot='${slot}']`,
+        ),
+      ).toBeInTheDocument();
     });
   });
-});
 
-describe("NavigationMenuTrigger", () => {
-  it("renders with the correct data-slot", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The menu should be a navigation landmark.
+   */
+  it("renders as a navigation landmark", () => {
     renderNavigationMenu();
-
-    const trigger = screen.getByRole("button", { name: /Orders/ });
-
-    expect(trigger).toHaveAttribute("data-slot", "navigation-menu-trigger");
-  });
-
-  it("applies the shared trigger style", () => {
-    renderNavigationMenu();
-
-    const trigger = screen.getByRole("button", { name: /Orders/ });
-
-    expect(trigger).toHaveClass("h-9");
-    expect(trigger).toHaveClass("rounded-md");
-    expect(trigger).toHaveClass("font-medium");
-  });
-
-  it("renders a decorative chevron", () => {
-    renderNavigationMenu();
-
-    const chevron = screen
-      .getByRole("button", { name: /Orders/ })
-      .querySelector("svg");
-
-    expect(chevron).toBeInTheDocument();
-    expect(chevron).toHaveAttribute("aria-hidden", "true");
-  });
-
-  it("reports the closed state", () => {
-    renderNavigationMenu();
-
-    expect(screen.getByRole("button", { name: /Orders/ })).toHaveAttribute(
-      "data-state",
-      "closed",
-    );
-  });
-});
-
-describe("NavigationMenuLink", () => {
-  it("renders an anchor with the correct data-slot", () => {
-    renderNavigationMenu();
-
-    const link = screen.getByRole("link", { name: "Reports" });
-
-    expect(link).toHaveAttribute("href", "/reports");
-    expect(link).toHaveAttribute("data-slot", "navigation-menu-link");
-  });
-
-  it("marks the active link", () => {
-    render(
-      <NavigationMenu>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuLink href="/reports" active>
-              Reports
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>,
-    );
-
-    const link = screen.getByRole("link", { name: "Reports" });
-
-    // Radix emits data-active as a bare presence attribute, not "true".
-    expect(link).toHaveAttribute("data-active", "");
-    expect(link).toHaveAttribute("aria-current", "page");
-  });
-
-  it("merges a custom className with the defaults", () => {
-    render(
-      <NavigationMenu>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuLink href="/reports" className="font-bold">
-              Reports
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>,
-    );
-
-    expect(screen.getByRole("link", { name: "Reports" })).toHaveClass(
-      "font-bold",
-    );
-  });
-});
-
-describe("NavigationMenuViewport", () => {
-  it("sets the correct data-slot and classes once mounted", async () => {
-    const user = userEvent.setup();
-    const { container } = renderNavigationMenu();
-
-    await user.click(screen.getByRole("button", { name: /Orders/ }));
-    await screen.findByText("Active orders");
-
-    const viewport = container.querySelector(
-      "[data-slot='navigation-menu-viewport']",
-    );
-
-    expect(viewport).toBeInTheDocument();
-    expect(viewport).toHaveClass("bg-popover");
-    expect(viewport).toHaveClass("rounded-md");
-  });
-
-  it("can be composed standalone alongside viewport={false}", async () => {
-    const user = userEvent.setup();
-    const { container } = render(
-      <NavigationMenu viewport={false}>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuTrigger>Orders</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <NavigationMenuLink href="/orders/active">
-                Active orders
-              </NavigationMenuLink>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-        <NavigationMenuViewport />
-      </NavigationMenu>,
-    );
-
-    await user.click(screen.getByRole("button", { name: /Orders/ }));
-    await screen.findByText("Active orders");
 
     expect(
-      container.querySelector("[data-slot='navigation-menu-viewport']"),
-    ).toBeInTheDocument();
-  });
-});
-
-describe("NavigationMenu interactions", () => {
-  it("is closed initially", () => {
-    renderNavigationMenu();
-
-    expect(screen.queryByText("Active orders")).not.toBeInTheDocument();
-  });
-
-  it("opens the content when the trigger is clicked", async () => {
-    const user = userEvent.setup();
-    renderNavigationMenu();
-
-    await user.click(screen.getByRole("button", { name: /Orders/ }));
-
-    expect(await screen.findByText("Active orders")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Orders/ })).toHaveAttribute(
-      "data-state",
-      "open",
-    );
-  });
-
-  it("sets the correct data-slot on the opened content", async () => {
-    const user = userEvent.setup();
-    const { container } = renderNavigationMenu();
-
-    await user.click(screen.getByRole("button", { name: /Orders/ }));
-    await screen.findByText("Active orders");
-
-    expect(
-      container.querySelector("[data-slot='navigation-menu-content']"),
+      screen.getByRole("navigation"),
     ).toBeInTheDocument();
   });
 
-  it("calls onValueChange when a menu opens", async () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Plain links should navigate directly.
+   */
+  it("renders a plain link for items with no submenu", () => {
+    renderNavigationMenu();
+
+    expect(
+      screen.getByRole("link", {
+        name: "Reports",
+      }),
+    ).toHaveAttribute("href", "/reports");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Clicking a trigger should open its submenu.
+   */
+  it("opens a submenu when its trigger is clicked", async () => {
+    const user = userEvent.setup();
+
+    renderNavigationMenu();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /orders/i,
+      }),
+    );
+
+    expect(
+      await screen.findByRole("link", {
+        name: "Open orders",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * defaultValue should open the matching submenu.
+   */
+  it("respects defaultValue", () => {
+    renderNavigationMenu({
+      defaultValue: "orders",
+    });
+
+    expect(
+      screen.getByRole("link", {
+        name: "Open orders",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The trigger should report the open state.
+   */
+  it("reports the open state on the trigger", () => {
+    renderNavigationMenu({
+      defaultValue: "orders",
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: /orders/i,
+      }),
+    ).toHaveAttribute("data-state", "open");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * onValueChange should report which submenu opened.
+   */
+  it("calls onValueChange when a submenu opens", async () => {
     const user = userEvent.setup();
     const onValueChange = jest.fn();
-    render(
-      <NavigationMenu onValueChange={onValueChange}>
-        <NavigationMenuList>
-          <NavigationMenuItem value="orders">
-            <NavigationMenuTrigger>Orders</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <NavigationMenuLink href="/orders/active">
-                Active orders
-              </NavigationMenuLink>
-            </NavigationMenuContent>
+
+    renderNavigationMenu({ onValueChange });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /orders/i,
+      }),
+    );
+
+    expect(onValueChange).toHaveBeenCalledWith(
+      "orders",
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The shared trigger style helper should produce usable classes.
+   */
+  it("exposes a reusable trigger style", () => {
+    expect(
+      navigationMenuTriggerStyle(),
+    ).toContain("inline-flex");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A custom className should be merged with the defaults.
+   */
+  it("merges a custom className with the defaults", () => {
+    const { container } = render(
+      <NavigationMenu className="w-full">
+        <NavigationMenuList className="gap-4">
+          <NavigationMenuItem value="reports">
+            <NavigationMenuLink href="/reports">
+              Reports
+            </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>,
     );
 
-    await user.click(screen.getByRole("button", { name: /Orders/ }));
+    expect(
+      container.querySelector(
+        "[data-slot='navigation-menu']",
+      ),
+    ).toHaveClass("w-full", "relative");
 
-    expect(onValueChange).toHaveBeenCalledWith("orders");
+    expect(
+      container.querySelector(
+        "[data-slot='navigation-menu-list']",
+      ),
+    ).toHaveClass("gap-4", "flex");
   });
-});
 
-describe("navigationMenuTriggerStyle", () => {
-  it("returns the shared trigger classes", () => {
-    const classes = navigationMenuTriggerStyle();
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A submenu must NOT be in the DOM until it is opened.
+   */
+  it("does not render a submenu while closed", () => {
+    renderNavigationMenu();
 
-    expect(classes).toContain("h-9");
-    expect(classes).toContain("rounded-md");
-    expect(classes).toContain("bg-background");
+    expect(
+      screen.queryByRole("link", {
+        name: "Open orders",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A closed trigger must not report itself as open.
+   */
+  it("does not report a closed trigger as open", () => {
+    renderNavigationMenu();
+
+    expect(
+      screen.getByRole("button", {
+        name: /orders/i,
+      }),
+    ).toHaveAttribute("data-state", "closed");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * An item with no submenu must NOT render a trigger button.
+   */
+  it("does not render a trigger for an item with no submenu", () => {
+    renderNavigationMenu();
+
+    expect(
+      screen.queryByRole("button", {
+        name: /reports/i,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A submenu trigger must NOT navigate - it opens a panel instead.
+   */
+  it("does not give the submenu trigger a destination", () => {
+    renderNavigationMenu();
+
+    const trigger = screen.getByRole("button", {
+      name: /orders/i,
+    });
+
+    expect(trigger.tagName).toBe("BUTTON");
+    expect(trigger).not.toHaveAttribute("href");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A controlled menu must not open a submenu on its own.
+   */
+  it("does not open a controlled menu without a handler", async () => {
+    const user = userEvent.setup();
+
+    renderNavigationMenu({ value: "" });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /orders/i,
+      }),
+    );
+
+    expect(
+      screen.queryByRole("link", {
+        name: "Open orders",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * onValueChange must not fire on the initial render.
+   */
+  it("does not call onValueChange on initial render", () => {
+    const onValueChange = jest.fn();
+
+    renderNavigationMenu({
+      defaultValue: "orders",
+      onValueChange,
+    });
+
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * With the viewport turned off, no viewport element may be rendered.
+   */
+  it("does not render a viewport when it is turned off", () => {
+    const { container } = renderNavigationMenu({
+      viewport: false,
+    });
+
+    expect(
+      container.querySelector(
+        "[data-slot='navigation-menu-viewport']",
+      ),
+    ).not.toBeInTheDocument();
   });
 });

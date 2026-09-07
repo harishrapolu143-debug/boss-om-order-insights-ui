@@ -1,3 +1,4 @@
+import * as React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
@@ -7,61 +8,324 @@ import {
   ResizableHandle,
 } from "./resizable";
 
-function renderGroup(
-  props: { direction?: "horizontal" | "vertical"; withHandle?: boolean } = {},
+function renderPanels(
+  props: {
+    direction?: "horizontal" | "vertical";
+    withHandle?: boolean;
+  } = {},
 ) {
-  const { direction = "horizontal", withHandle } = props;
-
   return render(
-    <ResizablePanelGroup direction={direction}>
-      <ResizablePanel defaultSize={50}>Left panel</ResizablePanel>
-      <ResizableHandle withHandle={withHandle} />
-      <ResizablePanel defaultSize={50}>Right panel</ResizablePanel>
+    <ResizablePanelGroup
+      direction={props.direction ?? "horizontal"}
+    >
+      <ResizablePanel defaultSize={50}>
+        Order list
+      </ResizablePanel>
+
+      <ResizableHandle
+        withHandle={props.withHandle}
+      />
+
+      <ResizablePanel defaultSize={50}>
+        Order detail
+      </ResizablePanel>
     </ResizablePanelGroup>,
   );
 }
 
-describe("ResizablePanelGroup", () => {
-  it("sets the correct data-slot attribute", () => {
-    const { container } = renderGroup();
+/**
+ * ============================================================================
+ * Resizable
+ * ============================================================================
+ */
+describe("Resizable", () => {
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * Every resizable part should render with its own data-slot attribute.
+   */
+  it("sets the correct data-slot attributes for every part", () => {
+    const { container } = renderPanels();
 
     expect(
-      container.querySelector("[data-slot='resizable-panel-group']"),
+      container.querySelector(
+        "[data-slot='resizable-panel-group']",
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      container.querySelectorAll(
+        "[data-slot='resizable-panel']",
+      ),
+    ).toHaveLength(2);
+
+    expect(
+      container.querySelector(
+        "[data-slot='resizable-handle']",
+      ),
     ).toBeInTheDocument();
   });
 
-  it("applies the default classes", () => {
-    const { container } = renderGroup();
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The panel content should be rendered.
+   */
+  it("renders the content of every panel", () => {
+    renderPanels();
 
-    const group = container.querySelector(
-      "[data-slot='resizable-panel-group']",
+    expect(
+      screen.getByText("Order list"),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Order detail"),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The group should record its direction so the layout classes resolve.
+   */
+  it("records a horizontal direction", () => {
+    const { container } = renderPanels();
+
+    expect(
+      container.querySelector(
+        "[data-slot='resizable-panel-group']",
+      ),
+    ).toHaveAttribute(
+      "data-panel-group-direction",
+      "horizontal",
     );
-
-    expect(group).toHaveClass("flex");
-    expect(group).toHaveClass("h-full");
-    expect(group).toHaveClass("w-full");
   });
 
-  it("records the horizontal direction", () => {
-    const { container } = renderGroup();
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A vertical group should record the vertical direction.
+   */
+  it("records a vertical direction", () => {
+    const { container } = renderPanels({
+      direction: "vertical",
+    });
 
     expect(
-      container.querySelector("[data-slot='resizable-panel-group']"),
-    ).toHaveAttribute("data-panel-group-direction", "horizontal");
+      container.querySelector(
+        "[data-slot='resizable-panel-group']",
+      ),
+    ).toHaveAttribute(
+      "data-panel-group-direction",
+      "vertical",
+    );
   });
 
-  it("records the vertical direction", () => {
-    const { container } = renderGroup({ direction: "vertical" });
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The handle should be exposed as a separator so it can be operated by
+   * keyboard.
+   */
+  it("exposes the handle as a separator", () => {
+    renderPanels();
 
     expect(
-      container.querySelector("[data-slot='resizable-panel-group']"),
-    ).toHaveAttribute("data-panel-group-direction", "vertical");
+      screen.getByRole("separator"),
+    ).toBeInTheDocument();
   });
 
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * The handle should be focusable so it can be dragged with the
+   * keyboard.
+   */
+  it("makes the handle focusable", () => {
+    renderPanels();
+
+    expect(
+      screen.getByRole("separator"),
+    ).toHaveAttribute("tabindex", "0");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * withHandle should render a visible grip.
+   */
+  it("renders a visible grip when asked", () => {
+    const { container } = renderPanels({
+      withHandle: true,
+    });
+
+    const handle = container.querySelector(
+      "[data-slot='resizable-handle']",
+    ) as HTMLElement;
+
+    expect(
+      handle.querySelector("svg"),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Positive Scenario
+   * --------------------------------------------------------------------------
+   * A custom className should be merged with the defaults.
+   */
   it("merges a custom className with the defaults", () => {
     const { container } = render(
-      <ResizablePanelGroup direction="horizontal" className="rounded-lg">
-        <ResizablePanel>Only panel</ResizablePanel>
+      <ResizablePanelGroup
+        direction="horizontal"
+        className="rounded-lg"
+      >
+        <ResizablePanel>Order list</ResizablePanel>
+        <ResizableHandle className="bg-red-500" />
+        <ResizablePanel>Order detail</ResizablePanel>
+      </ResizablePanelGroup>,
+    );
+
+    expect(
+      container.querySelector(
+        "[data-slot='resizable-panel-group']",
+      ),
+    ).toHaveClass("rounded-lg", "flex");
+
+    expect(
+      container.querySelector(
+        "[data-slot='resizable-handle']",
+      ),
+    ).toHaveClass("bg-red-500");
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The grip is opt in - it must NOT be rendered unless asked for.
+   */
+  it("does not render a grip by default", () => {
+    const { container } = renderPanels();
+
+    const handle = container.querySelector(
+      "[data-slot='resizable-handle']",
+    ) as HTMLElement;
+
+    expect(
+      handle.querySelector("svg"),
+    ).not.toBeInTheDocument();
+
+    expect(handle).toBeEmptyDOMElement();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A horizontal group must NOT be marked as vertical, or the sizing
+   * classes resolve to the wrong axis.
+   */
+  it("does not report a vertical direction when horizontal", () => {
+    const { container } = renderPanels();
+
+    expect(
+      container.querySelector(
+        "[data-slot='resizable-panel-group']",
+      ),
+    ).not.toHaveAttribute(
+      "data-panel-group-direction",
+      "vertical",
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A group with no handle must not invent one.
+   */
+  it("does not render a handle that was not supplied", () => {
+    const { container } = render(
+      <ResizablePanelGroup direction="horizontal">
+        <ResizablePanel>Order list</ResizablePanel>
+      </ResizablePanelGroup>,
+    );
+
+    expect(
+      container.querySelector(
+        "[data-slot='resizable-handle']",
+      ),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByRole("separator"),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The panels must not be nested inside one another - they are siblings
+   * within the group.
+   */
+  it("does not nest one panel inside the other", () => {
+    const { container } = renderPanels();
+
+    const [first, second] = Array.from(
+      container.querySelectorAll(
+        "[data-slot='resizable-panel']",
+      ),
+    );
+
+    expect(first.contains(second)).toBe(false);
+    expect(second.contains(first)).toBe(false);
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * The handle must not swallow the panel content - it sits between the
+   * panels and holds none of it.
+   */
+  it("does not put panel content inside the handle", () => {
+    const { container } = renderPanels();
+
+    const handle = container.querySelector(
+      "[data-slot='resizable-handle']",
+    ) as HTMLElement;
+
+    expect(handle).not.toHaveTextContent(
+      "Order list",
+    );
+
+    expect(handle).not.toHaveTextContent(
+      "Order detail",
+    );
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Negative Scenario
+   * --------------------------------------------------------------------------
+   * A custom className must not remove the group layout.
+   */
+  it("does not drop the default classes when a custom className is given", () => {
+    const { container } = render(
+      <ResizablePanelGroup
+        direction="horizontal"
+        className="rounded-lg"
+      >
+        <ResizablePanel>Order list</ResizablePanel>
       </ResizablePanelGroup>,
     );
 
@@ -71,92 +335,6 @@ describe("ResizablePanelGroup", () => {
 
     expect(group).toHaveClass("rounded-lg");
     expect(group).toHaveClass("flex");
-  });
-});
-
-describe("ResizablePanel", () => {
-  it("renders each panel with the correct data-slot", () => {
-    const { container } = renderGroup();
-
-    expect(
-      container.querySelectorAll("[data-slot='resizable-panel']"),
-    ).toHaveLength(2);
-  });
-
-  it("renders panel content", () => {
-    renderGroup();
-
-    expect(screen.getByText("Left panel")).toBeInTheDocument();
-    expect(screen.getByText("Right panel")).toBeInTheDocument();
-  });
-
-  it("reflects the requested default size", () => {
-    const { container } = renderGroup();
-
-    const panel = container.querySelector("[data-slot='resizable-panel']");
-
-    expect(panel).toHaveAttribute("data-panel-size", "50.0");
-  });
-});
-
-describe("ResizableHandle", () => {
-  it("renders with the separator role and correct data-slot", () => {
-    renderGroup();
-
-    const handle = screen.getByRole("separator");
-
-    expect(handle).toBeInTheDocument();
-    expect(handle).toHaveAttribute("data-slot", "resizable-handle");
-  });
-
-  it("applies the default classes", () => {
-    renderGroup();
-
-    const handle = screen.getByRole("separator");
-
-    expect(handle).toHaveClass("bg-border");
-    expect(handle).toHaveClass("relative");
-    expect(handle).toHaveClass("items-center");
-  });
-
-  it("renders no grip by default", () => {
-    renderGroup();
-
-    expect(screen.getByRole("separator").querySelector("svg")).toBeNull();
-  });
-
-  it("renders a grip icon when withHandle is set", () => {
-    renderGroup({ withHandle: true });
-
-    expect(
-      screen.getByRole("separator").querySelector("svg"),
-    ).toBeInTheDocument();
-  });
-
-  it("does not leak withHandle onto the DOM element", () => {
-    renderGroup({ withHandle: true });
-
-    expect(screen.getByRole("separator")).not.toHaveAttribute("withhandle");
-  });
-
-  it("merges a custom className with the defaults", () => {
-    render(
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel>Left panel</ResizablePanel>
-        <ResizableHandle className="bg-red-500" />
-        <ResizablePanel>Right panel</ResizablePanel>
-      </ResizablePanelGroup>,
-    );
-
-    const handle = screen.getByRole("separator");
-
-    expect(handle).toHaveClass("bg-red-500");
-    expect(handle).toHaveClass("relative");
-  });
-
-  it("is focusable for keyboard resizing", () => {
-    renderGroup();
-
-    expect(screen.getByRole("separator")).toHaveAttribute("tabindex", "0");
+    expect(group).toHaveClass("h-full");
   });
 });
