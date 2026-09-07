@@ -228,6 +228,16 @@ describe("Accordion interactions", () => {
     expect(screen.getByText("Order details panel")).toBeInTheDocument();
   });
 
+  it("does not show a different item's content when one item is opened", async () => {
+    const user = userEvent.setup();
+    renderAccordion();
+
+    await user.click(screen.getByRole("button", { name: /order details/i }));
+
+    expect(screen.getByText("Order details panel")).toBeInTheDocument();
+    expect(screen.queryByText("Shipment details panel")).not.toBeInTheDocument();
+  });
+
   it("collapses an open item when collapsible is enabled", async () => {
     const user = userEvent.setup();
     renderAccordion({ defaultValue: "item-1" });
@@ -249,6 +259,28 @@ describe("Accordion interactions", () => {
     await user.click(screen.getByRole("button", { name: /shipment details/i }));
 
     expect(screen.getByText("Shipment details panel")).toBeInTheDocument();
+    expect(screen.queryByText("Order details panel")).not.toBeInTheDocument();
+  });
+
+  it("does not change the value when a disabled item is clicked", async () => {
+    const user = userEvent.setup();
+    const onValueChange = jest.fn();
+    render(
+      <Accordion type="single" collapsible onValueChange={onValueChange}>
+        <AccordionItem value="item-1" disabled>
+          <AccordionTrigger>Order details</AccordionTrigger>
+          <AccordionContent>Order details panel</AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-2">
+          <AccordionTrigger>Shipment details</AccordionTrigger>
+          <AccordionContent>Shipment details panel</AccordionContent>
+        </AccordionItem>
+      </Accordion>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /order details/i }));
+
+    expect(onValueChange).not.toHaveBeenCalled();
     expect(screen.queryByText("Order details panel")).not.toBeInTheDocument();
   });
 
@@ -295,6 +327,14 @@ describe("Accordion interactions", () => {
 
     expect(onValueChange).toHaveBeenCalledWith("item-2");
     expect(screen.getByText("Order details panel")).toBeInTheDocument();
+    expect(screen.queryByText("Shipment details panel")).not.toBeInTheDocument();
+  });
+
+  it("does not render content for an unknown controlled value", () => {
+    renderAccordion({ value: "unknown-item" });
+
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
+    expect(screen.queryByText("Order details panel")).not.toBeInTheDocument();
     expect(screen.queryByText("Shipment details panel")).not.toBeInTheDocument();
   });
 
